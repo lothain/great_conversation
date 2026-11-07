@@ -48,6 +48,7 @@ do "$dir/welcome.pl" or die "welcome.pl: $@";
 do "$dir/popout.pl" or die "popout.pl: $@";
 do "$dir/live.pl" or die "live.pl: $@";
 do "$dir/phone.pl" or die "phone.pl: $@";
+do "$dir/tristan.pl" or die "tristan.pl: $@";
 # v4 request: no top bar; just a floating circular avatar in the top right.
 sub1(qr{<header id="topbar">\n  <h1>The Great Conversation</h1>\n  <span style="flex:1"></span>\n  (<button id="me" [^\n]*</button>)\n</header>\n}, sub { "$1\n" }, "top bar markup");
 sub1(qr{  #app \{ position: absolute; top: 56px;}, "  #app { position: absolute; top: 0;", "app top");

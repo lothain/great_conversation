@@ -31,9 +31,9 @@ if (html === before) { console.error("stamp.mjs: no ./globe.js or ./account.js i
 let version = new Date().toISOString().slice(0, 10);
 try {
   const git = args => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
-  version = `${git(["rev-parse", "--short", "HEAD"])}${git(["status", "--porcelain"]) ? "+" : ""} · ${version}`;
+  version = `${git(["rev-parse", "--short", "HEAD"])}${git(["status", "--porcelain"]) ? "+" : ""}`;
 } catch {}
-html = html.replace("__APH_VERSION__", version);
+html = html.replace("__APH_VERSION__", version).replace('title="Version (build)"', `title="Version ${version}, built ${new Date().toISOString().slice(0, 10)}"`);
 
 // The WASM download: start it only when the globe is actually on screen (a phone may never open
 // it), and report progress for the loading state. Trunk's loader calls init(path); hand it a

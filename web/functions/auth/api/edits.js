@@ -8,7 +8,7 @@ const MAX_TEXT = 20000;
 export async function onRequestPut({ request, env }) {
   const email = await callerEmail(request, env);
   if (!email) return json({ error: "not signed in" }, 401);
-  if (!isCurator(email, env)) return json({ error: "only the curator can edit" }, 403);
+  if (!isCurator(email, env)) return json({ error: "only Tristan can edit" }, 403);
 
   let body;
   try { body = await request.json(); } catch { return json({ error: "expected JSON" }, 400); }

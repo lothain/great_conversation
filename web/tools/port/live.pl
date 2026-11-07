@@ -58,7 +58,7 @@ sub1(qr{  const name = r\.mine \? "You" :}, sub { q{  const name = r.mine ? (r.p
 # and autoplay only resumes a replay; it never restarts one that already reached the present.
 sub1(qr{(function saveSoon\(\) \{\n  clearTimeout\(saveTimer\);\n  saveTimer = setTimeout\(\(\) => )(save\("gc\.state\.v3", \{ year: state\.year, pov: globe\.pointOfView\(\), channel: state\.channel,\n    civOn: \[\.\.\.state\.civOn\], relOn: \[\.\.\.state\.relOn\], civClip: state\.civClip, window: state\.window \}\)), 400\);\n\}\n},
   sub { "const saveNow = () => $2;\n${1}saveNow(), 400);\n}\naddEventListener(\"pagehide\", saveNow);\ndocument.addEventListener(\"visibilitychange\", () => { if (document.hidden) saveNow(); });\n" }, "save on hide");
-sub1(qr{const autoplay = \(\) => \{ if \(autoplayed\) return; autoplayed = true; if \(!state\.playing\) }, sub { q~const autoplay = () => { if (autoplayed) return; autoplayed = true; if (!state.playing && !isPresent()) ~ }, "autoplay resumes only");
+sub1(qr{const autoplay = \(\) => \{ if \(autoplayed\) return; autoplayed = true; if \(!state\.playing\) setTimeout\(\(\) => \$\("play"\)\.click\(\), 0\); \};},sub { q~const autoplay = () => { if (autoplayed) return; autoplayed = true; setTimeout(() => { if (!state.playing && !isPresent()) $("play").click(); }, 0); };~ }, "autoplay resumes only");
 # Speaking needs signing in: signed-out visitors get a sign-in prompt instead of a message box.
 sub1(qr{(function composerHTML\(where\) \{\n  const ch = chanById\[state\.channel\], live = isPresent\(\);\n)}, sub { $1 . q{  if (live && !account.me) return `<div class="compose signin-prompt"><span>Sign in to join the conversation.</span><button type="button" data-signin>Sign in</button></div>`;
 } }, "composer needs sign-in");
@@ -69,4 +69,4 @@ sub1(qr{(  \.compose\.disabled textarea, \.compose\.disabled button \{ pointer-e
 sub1(qr{(document\.addEventListener\("click", e => \{\n  if \(e\.target\.closest\("\[data-present\]"\)\))}, sub { qq{document.addEventListener("click", e => { if (e.target.closest("[data-signin]")) account.signIn(); });\naccount.onChange(() => renderComposers());\n$1} }, "sign-in prompt wiring");
 # A small, muted version label after the title (filled in at build time by tools/stamp.mjs).
 sub1(qr{<div id="server">The Great Conversation</div>}, sub { q{<div id="server">The Great Conversation <span class="ver" title="Version (build)">__APH_VERSION__</span></div>} }, "version label");
-sub1(qr{(  #server \{ [^\n]*\n)}, sub { $1 . "  #server .ver { margin-left: 6px; font-size: 11.5px; font-weight: 400; color: var(--ink-2); opacity: .75; letter-spacing: .02em; }\n" }, "version css");
+sub1(qr{(  #server \{ [^\n]*\n)}, sub { $1 . "  #server .ver { margin-left: 6px; white-space: nowrap; font-size: 11.5px; font-weight: 400; color: var(--ink-2); opacity: .75; letter-spacing: .02em; }\n" }, "version css");

@@ -59,7 +59,7 @@
   #app { position: absolute; top: 0; left: 0; right: 0; bottom: 46px; display: flex; border-top: 1px solid #000; }
   #left { width: var(--left-w); flex: none; background: var(--chan); display: flex; flex-direction: column; min-width: 200px; }
   #server { padding: 12px 14px; font-weight: 600; font-size: 16px; border-bottom: 1px solid var(--rule); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-  #server .ver { margin-left: 6px; font-size: 11.5px; font-weight: 400; color: var(--ink-2); opacity: .75; letter-spacing: .02em; }
+  #server .ver { margin-left: 6px; white-space: nowrap; font-size: 11.5px; font-weight: 400; color: var(--ink-2); opacity: .75; letter-spacing: .02em; }
   #chanList { flex: 1; overflow-y: auto; padding: 8px 8px 16px; min-height: 60px; }
   .cat { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); margin: 14px 6px 4px; cursor: pointer; user-select: none; display: flex; gap: 4px; }
   .cat::before { content: "▾"; font-size: 10px; }
@@ -595,7 +595,7 @@
         <button role="tab" data-tab="utt" aria-selected="true">Utterances</button>
         <button role="tab" data-tab="globe">Globe</button>
         <button role="tab" data-tab="time">Timeline</button>
-        <button role="tab" data-tab="cur">Curator</button>
+        <button role="tab" data-tab="cur">Editing</button>
         <button role="tab" data-tab="reset">Reset</button>
       </nav>
       <div class="dlg-body">
@@ -622,7 +622,7 @@
         <section data-pane="cur" hidden>
           <h3>Your replies</h3>
           <p id="curStatus"></p>
-          <p class="sub">In a thread, hover one of the curator's replies and choose ✎ Edit (Ctrl+Enter saves, Esc cancels). Contexts are edited in a speaker's profile and save as you type. Edits are saved for everyone.</p>
+          <p class="sub">In a thread, hover one of your replies and choose ✎ Edit (Ctrl+Enter saves, Esc cancels). Contexts are edited in a speaker's profile and save as you type. Edits are saved for everyone.</p>
           <p id="curEditCount"></p>
           <p><button id="curExport" class="ghostbtn">⬇ Download my edits (JSON)</button></p>
         </section>
@@ -693,7 +693,7 @@ const TORAH = `<svg viewBox="0 0 40 40" width="70%" height="70%" aria-hidden="tr
   <path d="M10 9V5M10 31v4M30 9V5M30 31v4"/><path d="M16 17h8M16 20.5h8M16 24h6" stroke-width="1.3"/></g></svg>`;
 const SYMBOL = { "hebrew-bible": TORAH, "new-testament": "☧", "mahabharata": "ॐ", "latin-proverb": "Lat.", "beowulf-poet": "ᛒ", "star-trek": "✦", "annie-hall": "🎬" };
 const COLLECTIVE = new Set(Object.keys(SYMBOL));
-const CURATOR = (D.curator || "Curator").replace(/^@/, "");
+const CURATOR = (D.curator || "Tristan").replace(/^@/, "");
 const avInner = aid => SYMBOL[aid] || esc(initials(D.authors[aid]?.name || aid));
 function avStyle(aid, rel) {
   const p = D.authors[aid]?.portrait, bg = RELCOL[rel] || "#7a6a52";
@@ -772,7 +772,7 @@ const inChannel = (n, ch) => ch.kind === "all" ||
 
 // ---------- play order ----------
 // Every utterance gets a unique play time (ties nudged apart) so playback can deliver
-// them one at a time; Curator's reply to an utterance arrives right after it.
+// them one at a time; Tristan's reply to an utterance arrives right after it.
 const STEP = 0.004, CUR_DT = 0.002;
 { let prev = -Infinity;
   for (const n of [...D.nodes].sort((a, b) => a.t - b.t || (a.id < b.id ? -1 : 1))) { n.t = Math.max(n.t, prev + STEP); prev = n.t; } }
@@ -805,7 +805,7 @@ for (const e of D.edges) {  // graph edges are work-to-work: hang a reply on the
   if (tgt) (REPLIES[tgt.id] ||= []).push({ e, who });
 }
 const CUR = D.curatorReplies || {}, CUR_PROFILE = D.curatorProfile || {};
-const curT = id => byId[id].t + CUR_DT;          // when Curator's reply appears in the conversation
+const curT = id => byId[id].t + CUR_DT;          // when Tristan's reply appears in the conversation
 const fmtWhen = t => { const y = Math.floor(t), m = Math.floor((t - y) * 12 + 1e-6);
   return t >= 1900 ? new Date(y, m).toLocaleDateString([], { month: "short", year: "numeric" }) : fmtYear(y); };
 function curatorReligionAt(y) {
@@ -821,7 +821,7 @@ account.onChange(() => {
 });
 const isPresent = () => state.year >= T1 - 1e-6;
 const myRepliesTo = id => POSTS.filter(p => p.thread === id);
-// Curator's replies can be edited in the app (curator mode). Edits live in this browser
+// Tristan's replies can be edited in the app (curator mode). Edits live in this browser
 // until exported and merged into data/aphorisms.json with tools/apply_curator_edits.py.
 let CUR_EDITS = account.edits.reply;     // shared: loaded from the server (account.js)
 let curatorMode = false;                 // true only when signed in as the curator
@@ -1235,7 +1235,7 @@ function renderMembers(y) {
       <div class="tags">${m.civ ? `<span class="pill" title="${esc(m.civ.name)}"><i style="background:${civColor(m.civ.civ)}"></i>${esc(m.civ.name.replace(/\s*\(.*\)$/, ""))}</span>` : ""}${rf ? `<span class="pill" title="${esc(m.rel.detail || rf)}"><i style="background:${RELCOL[rf] || "#999"}"></i>${esc(rf)}</span>` : ""}</div></div></div>`; };
   const curHere = Object.keys(CUR).filter(id => curT(id) <= y && inChannel(byId[id], ch)).length;
   const cr = curatorReligionAt(y);
-  const curRow = (curHere || typingWho === "@curator") ? `<div class="mhead">Curator</div><div class="mem${sel === "@curator" ? " sel" : ""}${typingWho === "@curator" ? " typing" : ""}" data-curator="1"><div class="av cur" data-curator="1">${esc(CURATOR[0])}</div>
+  const curRow = (curHere || typingWho === "@curator") ? `<div class="mem${sel === "@curator" ? " sel" : ""}${typingWho === "@curator" ? " typing" : ""}" data-curator="1"><div class="av cur" data-curator="1">${esc(CURATOR[0])}</div>
       <div><div class="nm">${esc(CURATOR)}${typ}</div><div class="tags">${cr ? `<span class="pill"><i style="background:${RELCOL[cr.family] || "#999"}"></i>${esc(cr.label || cr.family)}</span>` : ""}<span class="pill">${curHere} repl${curHere === 1 ? "y" : "ies"} here</span></div></div></div>` : "";
   const mineHere = isPresent() && POSTS.some(p => p.mine && p.channel === state.channel);
   const youRow = mineHere ? `<div class="mhead">You</div><div class="mem"><div class="av" style="background:#6b5a44;font-size:11px">You</div><div><div class="nm">${esc(account.me?.displayName || "You")}</div><div class="tags"><span class="pill">${POSTS.filter(p => p.mine && p.channel === state.channel).length} message(s) here</span></div></div></div>` : "";
@@ -1283,7 +1283,7 @@ function utteranceDetail(n) {
         ? `<textarea id="ctx-${esc(n.id)}" class="ctxedit" data-ctx="${esc(n.id)}" rows="6" placeholder="What is happening when these words are said or written…">${esc(ctxText(n))}</textarea>
            <div class="fhint">Saved as you type · glosses: word[short meaning]${CTX_EDITS[n.id] !== undefined ? ` · <button class="linkbtn" data-ctxrevert="${esc(n.id)}">revert</button>` : ""}</div>`
         : `<div class="ctxread" id="ctx-${esc(n.id)}">${ctxText(n) ? gloss(ctxText(n)) : `<span class="ut">No context recorded.</span>`}</div>
-           <div class="fhint">Editable in curator mode (Settings → Curator).</div>`}
+           <div class="fhint">Only ${esc(CURATOR)} can edit this, when signed in.</div>`}
     </div></div>
     ${threads.length || ments.length ? `<div class="links">${threads.map(e => `<div class="pu-th">↳ ${esc(e.kind)} <b>${esc(labelOf(e.to, e.toLabel))}</b> · ${e.valence > 0 ? "adopts" : e.valence < 0 ? "rejects" : "mixed"} — <i>${esc(e.aspect)}</i></div>`).join("")}
       ${ments.map(m => `<div class="pu-th">@ ${m.from === n.id ? `calls back to <b>${esc(speakerName(byId[m.to]))}</b>` : `echoed by <b>${esc(speakerName(byId[m.from]))}</b>`} · ${esc(m.kind)} — <i>${esc(m.note || "")}</i></div>`).join("")}</div>` : ""}
@@ -1395,7 +1395,7 @@ document.addEventListener("mouseover", e => {
   let html;
   if (host.classList.contains("curator")) {
     const rel = curatorReligionAt(state.year);
-    html = `<div class="mh"><div class="av cur">${esc(CURATOR[0])}</div><div><div class="nm">${esc(CURATOR)}</div><div class="meta">Curator of this thread</div></div></div>
+    html = `<div class="mh"><div class="av cur">${esc(CURATOR[0])}</div><div><div class="nm">${esc(CURATOR)}</div><div class="meta">Replied in this thread</div></div></div>
       <div class="tags">${rel ? `<span class="pill"><i style="background:${RELCOL[rel.family] || "#999"}"></i>${esc(rel.label || rel.family)}</span>` : ""}</div>`;
   } else {
     const n = byId[host.dataset.id || host.dataset.jump || host.dataset.tid], aid = n.author, a = D.authors[aid] || {};
@@ -1510,8 +1510,8 @@ const me = $("me"), meMenu = $("meMenu"), dlg = $("settingsDlg");
 me.onclick = e => { e.stopPropagation(); meMenu.hidden = !meMenu.hidden; me.setAttribute("aria-expanded", String(!meMenu.hidden)); };
 addEventListener("click", e => { if (!meMenu.contains(e.target) && !me.contains(e.target)) { meMenu.hidden = true; me.setAttribute("aria-expanded", "false"); } });
 $("openSettings").onclick = () => { meMenu.hidden = true; openSettings(); };
-// STUB: "Be Curator" is a local switch standing in for real sign-in. The guest state is untouched;
-// switching back returns to it. Only Curator sees the edit controls on Curator's replies and on context.
+// STUB: "Be Tristan" is a local switch standing in for real sign-in. The guest state is untouched;
+// switching back returns to it. Only Tristan sees the edit controls on Tristan's replies and on context.
 // Sign-in is Cloudflare Access (email one-time PIN); the server decides who may edit.
 $("signIn").onclick = () => account.signIn();
 $("signOut").onclick = () => account.signOut();
@@ -1556,28 +1556,28 @@ function applyLangModes() {
 }
 addEventListener("keydown", e => { if (e.key === "Escape" && !dlg.hidden) closeSettings(); });
 function syncCuratorUI() {
-  const me = account.me, who = me ? (me.displayName || me.email) : "Guest listener";
+  const me = account.me, who = me ? (me.curator ? CURATOR : me.displayName || me.email) : "Guest listener";
   const nr = Object.keys(CUR_EDITS).length, nc = Object.keys(CTX_EDITS).length, n = nr + nc;
-  $("curStatus").textContent = curatorMode ? `Signed in as the curator (${me.email}): your edits are saved for everyone.`
-    : me ? `Signed in as ${me.email}. Only the curator can edit.` : "Sign in from your avatar menu (top right) as the curator to edit.";
+  $("curStatus").textContent = curatorMode ? `Signed in as ${CURATOR} (${me.email}): your edits are saved for everyone.`
+    : me ? `Signed in as ${me.email}. Only ${CURATOR} can edit.` : `Sign in from your avatar menu (top right) as ${CURATOR} to edit.`;
   $("curEditCount").textContent = n ? `Edited: ${nr} repl${nr === 1 ? "y" : "ies"}, ${nc} context${nc === 1 ? "" : "s"}.` : "No edits yet.";
   $("curExport").disabled = !n;
   document.querySelector("#me .mename").textContent = who;
   document.querySelector(".mm-name").textContent = who;
-  $("mmSub").textContent = me ? (curatorMode ? `Curator · ${me.email}` : me.email) : "Not signed in";
+  $("mmSub").textContent = me ? me.email : "Not signed in";
   const initial = me ? (curatorMode ? CURATOR[0] : who[0].toUpperCase()) : "You";
   document.querySelector(".mm-head .meav").textContent = initial;
   document.querySelector("#me .meav").textContent = initial;
   $("signIn").hidden = !!me; $("signOut").hidden = $("setName").hidden = !me;
   // The avatar is where you sign in: say so, and say who you are once you have.
-  const tip = me ? `Signed in as ${who}${curatorMode ? " · Curator" : ""} — settings, sign out` : "Sign in or settings";
+  const tip = me ? `Signed in as ${who} — settings, sign out` : "Sign in or settings";
   $("me").title = tip; $("me").setAttribute("aria-label", tip);
 }
 $("curExport").onclick = () => {
   const out = { kind: "curator-edits", curator: CURATOR, exported: new Date().toISOString(),
     edits: [...Object.entries(CUR_EDITS).map(([id, text]) => ({ entry: id.replace(/^entry:/, ""), field: "interpretation", value: text, was: byId[id]?.interp ?? null })),
             ...Object.entries(CTX_EDITS).map(([id, text]) => ({ entry: id.replace(/^entry:/, ""), field: "context", value: text, was: byId[id]?.context ?? null }))] };
-  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" })), download: "curator-edits.json" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" })), download: "tristan-edits.json" });
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
 syncCuratorUI();
@@ -1653,7 +1653,7 @@ function render() {
   globe.setTime(y, w);
   const nodeKey = mk + "|" + feedItems.map(n => n.id).join();
   if (nodeKey !== keys.nodes) { keys.nodes = nodeKey; renderFeed(feedItems); mineKey = null; }
-  // latest speaker: the last thing said in this channel (an utterance, or Curator's reply to it)
+  // latest speaker: the last thing said in this channel (an utterance, or Tristan's reply to it)
   const last = nodes[nodes.length - 1];
   const lastWho = last ? last.author : null;   // the curator is never the profile subject
   if (lastWho !== latestSpeaker) { latestSpeaker = lastWho; keys.members = null; }
@@ -1799,7 +1799,7 @@ $("worldClose").onclick = () => setWorld(false);
 // ---------- welcome ----------
 const welcome = $("welcome");
 let autoplayed = false;
-const autoplay = () => { if (autoplayed) return; autoplayed = true; if (!state.playing && !isPresent()) setTimeout(() => $("play").click(), 0); };
+const autoplay = () => { if (autoplayed) return; autoplayed = true; setTimeout(() => { if (!state.playing && !isPresent()) $("play").click(); }, 0); };
 if (!load("gc.welcomed", false)) welcome.hidden = false; else autoplay();
 // Shown on every visit until "Don't show this message again" is ticked.
 $("wskip").checked = !!load("gc.welcomed", false);
