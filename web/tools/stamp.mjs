@@ -3,6 +3,7 @@
 //   index.html  ./globe.js and ./account.js get ?v=<hash of the build's content>
 //   globe.js    passes its own ?v= on to every data fetch (see the top of globe.js)
 //   _headers    Cloudflare Pages: hashed files cached forever; everything else revalidated
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -24,6 +25,15 @@ let html = readFileSync(page, "utf8");
 const before = html;
 html = html.replace(/(["'])\.\/(globe|account)\.js\1/g, (_, q, name) => `${q}./${name}.js?v=${v}${q}`);
 if (html === before) { console.error("stamp.mjs: no ./globe.js or ./account.js import found"); process.exit(1); }
+
+// The version label after the title: the git commit (with "+" when there are uncommitted
+// changes) and the build date; just the date outside a git checkout.
+let version = new Date().toISOString().slice(0, 10);
+try {
+  const git = args => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  version = `${git(["rev-parse", "--short", "HEAD"])}${git(["status", "--porcelain"]) ? "+" : ""} · ${version}`;
+} catch {}
+html = html.replace("__APH_VERSION__", version);
 
 // The WASM download: start it only when the globe is actually on screen (a phone may never open
 // it), and report progress for the loading state. Trunk's loader calls init(path); hand it a
