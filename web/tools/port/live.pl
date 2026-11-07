@@ -54,3 +54,8 @@ sub1(qr{(  \.msg\.cont \{ padding-top: 1px; \}\n)}, sub { $1 . q{  .msg .from { 
 # In thread previews a reader's reply shows its author ("You" only for your own).
 sub1(qr{const miniAv = r => r\.mine \? `<span class="mini" style="background:#6b5a44">Y</span>`}, sub { q{const miniAv = r => r.mine ? `<span class="mini" style="background:${r.post.mine ? "#6b5a44" : "#8a6f4e"}">${esc((r.post.mine ? "You" : r.post.authorName || "?")[0].toUpperCase())}</span>`} }, "reply avatar");
 sub1(qr{  const name = r\.mine \? "You" :}, sub { q{  const name = r.mine ? (r.post.mine ? "You" : r.post.authorName || "A listener") :} }, "reply author");
+# Position: save it when the page is hidden or closed too (phones often never fire the timer),
+# and autoplay only resumes a replay; it never restarts one that already reached the present.
+sub1(qr{(function saveSoon\(\) \{\n  clearTimeout\(saveTimer\);\n  saveTimer = setTimeout\(\(\) => )(save\("gc\.state\.v3", \{ year: state\.year, pov: globe\.pointOfView\(\), channel: state\.channel,\n    civOn: \[\.\.\.state\.civOn\], relOn: \[\.\.\.state\.relOn\], civClip: state\.civClip, window: state\.window \}\)), 400\);\n\}\n},
+  sub { "const saveNow = () => $2;\n${1}saveNow(), 400);\n}\naddEventListener(\"pagehide\", saveNow);\ndocument.addEventListener(\"visibilitychange\", () => { if (document.hidden) saveNow(); });\n" }, "save on hide");
+sub1(qr{const autoplay = \(\) => \{ if \(autoplayed\) return; autoplayed = true; if \(!state\.playing\) }, sub { q~const autoplay = () => { if (autoplayed) return; autoplayed = true; if (!state.playing && !isPresent()) ~ }, "autoplay resumes only");

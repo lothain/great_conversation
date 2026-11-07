@@ -49,23 +49,38 @@ async function write(method, body) {
 }
 
 // The live socket: the server says when messages change (refetch) and who is typing.
-// Reconnects with backoff; without the backend (trunk serve) it quietly gives up.
+// Reconnects with backoff; without the backend (trunk serve) it quietly gives up. Phones pause
+// sockets in the background without closing them, so coming back to the page always refetches
+// and reconnects if the socket is gone, and a slow poll covers anything still missed.
+let liveSocket = null, liveGaveUp = false, lastHeard = 0;
 function connectLive(delay = 1000) {
-  if (!("WebSocket" in window)) return;
-  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/api/live`);
+  if (!("WebSocket" in window) || liveGaveUp) return;
+  const ws = liveSocket = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/api/live`);
   let opened = false, ping = 0;
-  ws.onopen = () => { opened = true; delay = 1000; ping = setInterval(() => ws.readyState === 1 && ws.send("ping"), 30000); };
+  ws.onopen = () => { opened = true; delay = 1000; lastHeard = Date.now(); ping = setInterval(() => ws.readyState === 1 && ws.send("ping"), 30000); };
   ws.onmessage = ev => {
+    lastHeard = Date.now();
+    if (ev.data === "pong") return;
     let m; try { m = JSON.parse(ev.data); } catch { return; }
     if (m.type === "posts") account.loadPosts();
     if (m.type === "typing" && m.author !== account.me?.id) for (const fn of typingListeners) fn(m);
   };
   ws.onclose = () => {
     clearInterval(ping);
-    if (!opened && delay >= 8000) return;        // never connected after a few tries: no live backend
-    setTimeout(() => connectLive(Math.min(delay * 2, 120000)), delay);
+    if (liveSocket !== ws) return;               // replaced by a newer socket
+    if (!opened && delay >= 8000) { liveGaveUp = true; return; }   // never connected: no live backend
+    setTimeout(() => { if (liveSocket === ws) connectLive(Math.min(delay * 2, 120000)); }, delay);
   };
 }
+function catchUp() {
+  if (liveGaveUp) return;
+  account.loadPosts();
+  // No pong for over a minute means the socket died quietly (phone asleep): start a fresh one.
+  if (!liveSocket || liveSocket.readyState > 1 || Date.now() - lastHeard > 65000) { try { liveSocket?.close(); } catch {} liveSocket = null; connectLive(); }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) catchUp(); });
+addEventListener("pageshow", e => { if (e.persisted) catchUp(); });
+setInterval(() => { if (!document.hidden) catchUp(); }, 120000);
 
 async function json(url, init = {}) {
   const r = await fetch(url, { credentials: "same-origin", redirect: "manual", ...init });

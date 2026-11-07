@@ -1595,11 +1595,14 @@ $("windowSel").onchange = e => { state.window = +e.target.value; render(); };
 $("resetView").onclick = () => { try { ["gc.state.v3", "gc.layout.v2", "gc.welcomed", "gc.closedCats", "gc.collapsed", "gc.langModes", "quoteMode"].forEach(k => localStorage.removeItem(k)); } catch {} location.reload(); };
 
 let saveTimer;
+const saveNow = () => save("gc.state.v3", { year: state.year, pov: globe.pointOfView(), channel: state.channel,
+    civOn: [...state.civOn], relOn: [...state.relOn], civClip: state.civClip, window: state.window });
 function saveSoon() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => save("gc.state.v3", { year: state.year, pov: globe.pointOfView(), channel: state.channel,
-    civOn: [...state.civOn], relOn: [...state.relOn], civClip: state.civClip, window: state.window }), 400);
+  saveTimer = setTimeout(() => saveNow(), 400);
 }
+addEventListener("pagehide", saveNow);
+document.addEventListener("visibilitychange", () => { if (document.hidden) saveNow(); });
 
 // ---------- the clock: 7-segment ----------
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -1790,7 +1793,7 @@ $("worldClose").onclick = () => setWorld(false);
 // ---------- welcome ----------
 const welcome = $("welcome");
 let autoplayed = false;
-const autoplay = () => { if (autoplayed) return; autoplayed = true; if (!state.playing) setTimeout(() => $("play").click(), 0); };
+const autoplay = () => { if (autoplayed) return; autoplayed = true; if (!state.playing && !isPresent()) setTimeout(() => $("play").click(), 0); };
 if (!load("gc.welcomed", false)) welcome.hidden = false; else autoplay();
 // Shown on every visit until "Don't show this message again" is ticked.
 $("wskip").checked = !!load("gc.welcomed", false);
