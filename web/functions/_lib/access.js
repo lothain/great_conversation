@@ -61,7 +61,9 @@ export async function caller(request, env) {
 }
 
 export function isCurator(email, env) {
-  const allowed = (env.CURATOR_EMAILS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+  // Forgiving about how the secret was typed: commas, semicolons or spaces between emails,
+  // and stray quotes around the whole list or each email.
+  const allowed = String(env.CURATOR_EMAILS || "").split(/[\s,;]+/).map(s => s.replace(/^["'<]+|["'>]+$/g, "").trim().toLowerCase()).filter(Boolean);
   return !!email && allowed.includes(email);
 }
 
