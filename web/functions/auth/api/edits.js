@@ -1,14 +1,14 @@
 // PUT /auth/api/edits  { id: "entry:<id>", field: "reply" | "context", text: string | null }
-// Only the curator. `text: null` reverts to the original.
+// Only Tristan. `text: null` reverts to the original.
 
-import { callerEmail, isCurator, json } from "../../_lib/access.js";
+import { callerEmail, isTristan, json } from "../../_lib/access.js";
 
 const MAX_TEXT = 20000;
 
 export async function onRequestPut({ request, env }) {
   const email = await callerEmail(request, env);
   if (!email) return json({ error: "not signed in" }, 401);
-  if (!isCurator(email, env)) return json({ error: "only Tristan can edit" }, 403);
+  if (!(await isTristan(email, env))) return json({ error: "only Tristan can edit" }, 403);
 
   let body;
   try { body = await request.json(); } catch { return json({ error: "expected JSON" }, 400); }

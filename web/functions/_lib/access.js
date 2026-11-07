@@ -7,7 +7,6 @@
 // Environment (wrangler.toml [vars] / dashboard):
 //   ACCESS_TEAM_DOMAIN  https://<team>.cloudflareaccess.com
 //   ACCESS_AUD          the Access application's "Application Audience (AUD) Tag"
-//   CURATOR_EMAILS      comma-separated emails allowed to edit the curator's text
 //   DEV_EMAIL           local development only (`wrangler pages dev`, .dev.vars): act as this
 //                       email without Access. Never set it in production.
 
@@ -60,11 +59,12 @@ export async function caller(request, env) {
   }
 }
 
-export function isCurator(email, env) {
-  // Forgiving about how the secret was typed: commas, semicolons or spaces between emails,
-  // and stray quotes around the whole list or each email.
-  const allowed = String(env.CURATOR_EMAILS || "").split(/[\s,;]+/).map(s => s.replace(/^["'<]+|["'>]+$/g, "").trim().toLowerCase()).filter(Boolean);
-  return !!email && allowed.includes(email);
+/// Tristan is whoever holds the display name "Tristan" (names are unique). Only Tristan may edit
+/// Tristan's replies and contexts.
+export const TRISTAN = "tristan";
+export async function isTristan(email, env) {
+  if (!email) return false;
+  return !!(await env.DB.prepare("SELECT 1 FROM users WHERE email = ? AND display_key = ?").bind(email, TRISTAN).first());
 }
 
 export const json = (body, status = 200) =>

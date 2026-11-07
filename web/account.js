@@ -1,13 +1,13 @@
-// Who is listening, and the curator's edits.
+// Who is listening, and Tristan's edits.
 //
 // Sign-in is Cloudflare Access (email one-time PIN) in front of /auth/*. The page itself is
-// public: anyone can read; signing in lets a reader set a display name, and lets the curator
-// (an allow-listed email, checked on the server) edit the curator's replies and contexts.
+// public: anyone can read; signing in lets a reader set a display name and post; Tristan (whoever holds
+// that display name, checked on the server) can also edit Tristan's replies and contexts.
 //
 //   await account.load()                 public edits (everyone sees the same text)
-//   account.me                           null | { email, displayName, curator }
+//   account.me                           null | { email, displayName, tristan }
 //   account.onChange(fn)                 called when sign-in state or edits change
-//   account.sync("reply" | "context", map)   save changes to a map of id -> text (curator only)
+//   account.sync("reply" | "context", map)   save changes to a map of id -> text (Tristan only)
 //   account.signIn() / signOut() / setDisplayName(name)
 //
 // Without the Cloudflare backend (e.g. `trunk serve`) the API is absent: no edits, nobody signed in.
@@ -104,7 +104,7 @@ export const account = {
         Object.assign(saved[field], data[field] || {});
       }
     } catch (e) {
-      console.info("curator edits unavailable:", e.message);
+      console.info("edits unavailable:", e.message);
     }
     // Who's signed in doesn't block the page.
     const tried = sessionStorage.getItem("aph.signingIn");
@@ -160,7 +160,7 @@ export const account = {
   async post(channel, thread, text) {
     if (!account.me) { notice("Sign in (your avatar, top right) to join the conversation."); return false; }
     // Everyone who speaks has a name: readers choose one before their first message.
-    if (!account.me.curator && !account.me.displayName) {
+    if (!account.me.tristan && !account.me.displayName) {
       const name = prompt("Choose a display name before you post (2–40 characters, unique):", "");
       if (name === null || !name.trim() || !(await account.setDisplayName(name))) return false;
     }
@@ -181,7 +181,7 @@ export const account = {
 
   /// Save what changed in `map` (id -> text; missing ids are reverted to the original).
   sync(field, map) {
-    if (!account.me?.curator) return;
+    if (!account.me?.tristan) return;
     clearTimeout(timers[field]);
     timers[field] = setTimeout(async () => {
       const was = saved[field];

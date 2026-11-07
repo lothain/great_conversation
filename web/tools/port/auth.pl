@@ -1,5 +1,5 @@
 # v4 request: no "be Tristan". Signing in (Cloudflare Access, email PIN) is the only way to edit,
-# only the curator's emails can, edits are shared through the server, and the curator is simply Tristan.
+# only Tristan (whoever holds the display name "Tristan") can, and edits are shared through the server.
 
 sub1(qr{import \{ boot \} from "\./globe\.js";\nconst \{ D, globe \} = await boot\("#globeCanvas"\);\n},
   sub { qq{import { boot } from "./globe.js";\nimport { account } from "./account.js";\nconst { D, globe } = await boot("#globeCanvas");\nawait account.load();\n} }, "import account");
@@ -28,12 +28,12 @@ $("setName").onclick = async () => {
   if (name !== null && name.trim()) await account.setDisplayName(name);
 };
 account.onChange(() => {
-  curatorMode = !!account.me?.curator;
+  curatorMode = !!account.me?.tristan;
   syncCuratorUI(); renderThread(); refreshSlots(); keys.prof = null; updateProfile();
 });
 } }, "sign-in wiring");
 sub1(qr{function syncCuratorUI\(\) \{\n.*?\n\}\n}s, sub { q{function syncCuratorUI() {
-  const me = account.me, who = me ? (me.curator ? CURATOR : me.displayName || me.email) : "Guest listener";
+  const me = account.me, who = me ? (me.displayName || me.email) : "Guest listener";
   const nr = Object.keys(CUR_EDITS).length, nc = Object.keys(CTX_EDITS).length, n = nr + nc;
   $("curStatus").textContent = curatorMode ? `Signed in as ${CURATOR} (${me.email}): your edits are saved for everyone.`
     : me ? `Signed in as ${me.email}. Only ${CURATOR} can edit.` : `Sign in from your avatar menu (top right) as ${CURATOR} to edit.`;

@@ -1,4 +1,4 @@
-// GET /api/edits: the curator's edits, public, so every reader sees the same text.
+// GET /api/edits: Tristan's edits, public, so every reader sees the same text.
 // -> { reply: { "entry:<id>": text, ... }, context: { ... } }
 
 import { json } from "../_lib/access.js";

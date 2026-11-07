@@ -31,15 +31,6 @@ else
   echo "== Sign-in already configured in wrangler.toml"
 fi
 
-echo "== Curator emails (a secret, kept out of the repo)"
-if wr pages secret list --project-name "$PROJECT" 2>/dev/null | grep -q CURATOR_EMAILS; then
-  echo "set"
-else
-  read -r -p "Emails allowed to edit the curator's text (comma-separated): " CURATORS
-  [ -n "$CURATORS" ] || { echo "Needed once; rerun when ready."; exit 1; }
-  printf '%s' "$CURATORS" | wr pages secret put CURATOR_EMAILS --project-name "$PROJECT"
-fi
-
 echo "== Database tables"
 if wr d1 execute great-conversation --remote --json --command "SELECT name FROM sqlite_master WHERE type='table' AND name='posts'" 2>/dev/null | grep -q '"posts"'; then
   echo "up to date"

@@ -3,7 +3,7 @@
 //   PUT    { id, text }                 your own message
 //   DELETE { id }                       your own message
 // Every change is announced on the live socket so open pages refetch.
-import { callerEmail, isCurator, json } from "../../_lib/access.js";
+import { callerEmail, json } from "../../_lib/access.js";
 import { announce } from "../../_lib/live.js";
 
 const MAX = 4000;
@@ -17,11 +17,9 @@ export async function onRequestPost({ request, env }) {
   const b = await body(request);
   const text = clean(b?.text);
   if (!ok(b?.channel) || (b.thread != null && !ok(b.thread)) || !text || text.length > MAX) return json({ error: "bad message" }, 400);
-  // Everyone who speaks has a name: the curator posts as Tristan, readers choose a display name first.
-  if (!isCurator(email, env)) {
-    const named = await env.DB.prepare("SELECT display_name FROM users WHERE email = ? AND display_name IS NOT NULL").bind(email).first();
-    if (!named) return json({ error: "choose a display name first" }, 409);
-  }
+  // Everyone who speaks has a display name (Tristan included).
+  const named = await env.DB.prepare("SELECT display_name FROM users WHERE email = ? AND display_name IS NOT NULL").bind(email).first();
+  if (!named) return json({ error: "choose a display name first" }, 409);
   // A light flood guard: at most 10 messages a minute per reader.
   const since = new Date(Date.now() - 60_000).toISOString();
   const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM posts WHERE author = ? AND at > ?").bind(email, since).first();

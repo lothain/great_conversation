@@ -1521,7 +1521,7 @@ $("setName").onclick = async () => {
   if (name !== null && name.trim()) await account.setDisplayName(name);
 };
 account.onChange(() => {
-  curatorMode = !!account.me?.curator;
+  curatorMode = !!account.me?.tristan;
   syncCuratorUI(); renderThread(); refreshSlots(); keys.prof = null; updateProfile();
 });
 $("openWelcome").onclick = () => { meMenu.hidden = true; $("wskip").checked = !!load("gc.welcomed", false); $("welcome").hidden = false; };
@@ -1556,7 +1556,7 @@ function applyLangModes() {
 }
 addEventListener("keydown", e => { if (e.key === "Escape" && !dlg.hidden) closeSettings(); });
 function syncCuratorUI() {
-  const me = account.me, who = me ? (me.curator ? CURATOR : me.displayName || me.email) : "Guest listener";
+  const me = account.me, who = me ? (me.displayName || me.email) : "Guest listener";
   const nr = Object.keys(CUR_EDITS).length, nc = Object.keys(CTX_EDITS).length, n = nr + nc;
   $("curStatus").textContent = curatorMode ? `Signed in as ${CURATOR} (${me.email}): your edits are saved for everyone.`
     : me ? `Signed in as ${me.email}. Only ${CURATOR} can edit.` : `Sign in from your avatar menu (top right) as ${CURATOR} to edit.`;
