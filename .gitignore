@@ -1,0 +1,21 @@
+# Build output (rebuilt by cargo / trunk / tools/deploy.sh)
+/target/
+/dist-release/
+/web/dist/
+node_modules/
+__pycache__/
+*.zip
+
+# Local Cloudflare state and dev-only settings (.dev.vars can impersonate a user locally)
+.wrangler/
+.dev.vars
+
+# Secrets: logins for the sourcing tools, and a browser profile holding live cookies
+credentials.local.json
+tools/.browser-profile/
+
+# Downloaded source texts: many are copyrighted (Derrida, Dick, Einstein, ...); keep them local
+/sources/
+
+# Scratch screenshots and test scripts
+/shots/

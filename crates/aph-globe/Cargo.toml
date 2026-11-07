@@ -1,0 +1,36 @@
+[package]
+name = "aph-globe"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+description = "Bevy globe renderer for the aphorisms dataset; native window or WASM in a web page"
+
+[dependencies]
+aph-data = { path = "../aph-data", default-features = false }
+aph-scene = { path = "../aph-scene" }
+anyhow = "1"
+# Only what the globe uses (no audio, glTF, scenes, animation, picking): keeps the WASM small.
+bevy = { version = "0.20", default-features = false, features = [
+    "default_app", "std", "multi_threaded", "bevy_winit", "bevy_window", "webgl2",
+    "bevy_render", "bevy_core_pipeline", "bevy_pbr", "bevy_light", "bevy_mesh", "bevy_shader", "bevy_material",
+    "bevy_image", "bevy_camera", "bevy_color", "png",
+    # The default camera tonemapping needs its lookup tables.
+    "tonemapping_luts", "ktx2", "zstd_rust",
+] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# The native dev window also shows a text HUD.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+bevy = { version = "0.20", default-features = false, features = ["bevy_ui", "bevy_ui_render", "bevy_text", "default_font", "x11", "wayland"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1"
+js-sys = "0.3"
+wasm-bindgen = "0.2"
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+image = { version = "0.25", default-features = false, features = ["png"] }

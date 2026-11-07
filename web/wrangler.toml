@@ -1,0 +1,27 @@
+# Cloudflare Pages project for the Great Conversation.
+# Deploy from this folder (so functions/ is picked up):
+#   npx wrangler pages deploy ../dist-release --project-name great-conversation
+
+name = "great-conversation"
+pages_build_output_dir = "../dist-release"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Who may edit the curator's text is the secret CURATOR_EMAILS (comma-separated emails),
+# kept out of the repo. tools/deploy.sh asks for it once; or:
+#   npx wrangler pages secret put CURATOR_EMAILS --project-name great-conversation
+# Fill these in from Zero Trust → Access → Applications → (this app):
+ACCESS_TEAM_DOMAIN = "https://snowy-violet-d3e3.cloudflareaccess.com"
+ACCESS_AUD = "c79af6c510bf2fceeec4e4d5fe090b5e0c0cf164f76dc37647a3047274e9fb16"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "great-conversation"
+# From `npx wrangler d1 create great-conversation`:
+database_id = "eec7dd04-af74-49d4-8779-5749f65cd96e"
+
+# The live room (live/worker.js, deployed as its own Worker): new-message and typing notices.
+[[durable_objects.bindings]]
+name = "LIVE"
+class_name = "Live"
+script_name = "great-conversation-live"

@@ -1,0 +1,109 @@
+{
+ "_doc": "When the curator's replies (each entry's `interpretation`) enter the conversation. Phases run in order; an author belongs to the first phase that lists them. Dates are EDTF months (YYYY-MM/YYYY-MM). Within a phase, replies are spread across the range in the utterances' own chronological order, with a small stable jitter. Authors in no phase fall into `rest`, a smooth gradient.",
+ "curator": "Tristan",
+ "phases": [
+  {
+   "name": "The Bible, the scholastics, the great Greeks",
+   "when": "2005-01/2005-08",
+   "authors": [
+    "hebrew-bible",
+    "new-testament",
+    "paul-of-tarsus",
+    "augustine",
+    "boethius",
+    "alfred",
+    "aquinas",
+    "homer",
+    "socrates",
+    "plato",
+    "aristotle"
+   ]
+  },
+  {
+   "name": "Literature and ethics",
+   "when": "2005-09/2006-05",
+   "authors": [
+    "beowulf-poet",
+    "mahabharata",
+    "horace",
+    "lucretius",
+    "rumi",
+    "omar-khayyam",
+    "shakespeare",
+    "montaigne",
+    "johnson",
+    "goethe",
+    "coleridge",
+    "emerson",
+    "hugo",
+    "flaubert",
+    "carroll",
+    "mallarme",
+    "hofmannsthal",
+    "eliot",
+    "tolkien",
+    "cs-lewis",
+    "philip-k-dick"
+   ]
+  },
+  {
+   "name": "Modern philosophy",
+   "when": "2007-01/2009-12",
+   "authors": [
+    "bacon",
+    "descartes",
+    "pascal",
+    "locke",
+    "lichtenberg",
+    "herder",
+    "kant",
+    "humboldt",
+    "kierkegaard",
+    "nietzsche",
+    "saussure",
+    "wittgenstein",
+    "ramsey",
+    "neurath",
+    "heidegger",
+    "quine",
+    "levi-strauss",
+    "foucault",
+    "derrida"
+   ]
+  },
+  {
+   "name": "Political philosophy",
+   "when": "2010-01/2011-12",
+   "authors": [
+    "thucydides",
+    "caesar",
+    "ibn-khaldun",
+    "machiavelli",
+    "hobbes",
+    "rousseau",
+    "talleyrand",
+    "orwell"
+   ]
+  }
+ ],
+ "rest": {
+  "name": "Everything else",
+  "when": "2012-01/2026-10"
+ },
+ "profile": {
+  "religion": [
+   {
+    "when": "2005/2010",
+    "family": "Christianity",
+    "label": "Catholic",
+    "detail": "Catholic"
+   },
+   {
+    "when": "2011/..",
+    "family": "Secular/nonreligious",
+    "label": "None",
+    "detail": "None"
+   }
+  ]
+ }
+}

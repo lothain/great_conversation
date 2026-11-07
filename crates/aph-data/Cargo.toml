@@ -1,0 +1,28 @@
+[package]
+name = "aph-data"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+description = "Typed model, validator and tooling for the aphorisms dataset"
+
+[features]
+default = ["cli"]
+# The `aph` command-line tool and the Wikipedia matcher (not needed by the renderer or the web build).
+cli = ["dep:clap", "dep:ureq", "dep:unicode-normalization"]
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+clap = { version = "4", features = ["derive"], optional = true }
+unicode-normalization = { version = "0.1", optional = true }
+ureq = { version = "2", features = ["json"], optional = true }
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "aph"
+path = "src/main.rs"
+required-features = ["cli"]

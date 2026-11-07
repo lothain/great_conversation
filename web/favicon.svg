@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- A parchment globe with a speech tail: the Great Conversation. -->
+  <path d="M32 4a26 26 0 1 1-13.5 48.2L7 58l3.6-11.4A26 26 0 0 1 32 4z" fill="#3b2f22"/>
+  <circle cx="32" cy="30" r="21" fill="#efe4c8"/>
+  <g fill="none" stroke="#8a5a2b" stroke-width="2.4" stroke-linecap="round">
+    <ellipse cx="32" cy="30" rx="9" ry="21"/>
+    <path d="M11 30h42M14.5 19h35M14.5 41h35"/>
+  </g>
+  <circle cx="24" cy="23" r="3.6" fill="#b5462e"/>
+  <circle cx="41" cy="37" r="3.6" fill="#b5462e"/>
+  <path d="M24 23Q38 20 41 37" fill="none" stroke="#b5462e" stroke-width="2.2"/>
+</svg>

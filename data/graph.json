@@ -1,0 +1,1438 @@
+{
+ "people": {
+  "al-farabi": {
+   "name": "Abū Naṣr al-Fārābī",
+   "life": "0870~/0950",
+   "in_collection": true,
+   "works": []
+  },
+  "al-khwarizmi": {
+   "name": "Muḥammad ibn Mūsā al-Khwārizmī",
+   "life": "0780~/0850~",
+   "in_collection": true,
+   "works": []
+  },
+  "al-kindi": {
+   "name": "Abū Yūsuf Yaʿqūb al-Kindī",
+   "life": "0801~/0873~",
+   "in_collection": true,
+   "works": []
+  },
+  "al-sirafi": {
+   "name": "Abū Saʿīd al-Sīrāfī",
+   "life": "0893~/0979",
+   "in_collection": true,
+   "works": []
+  },
+  "alfred": {
+   "name": "Alfred the Great and his circle",
+   "life": "0849/0899",
+   "in_collection": true,
+   "works": []
+  },
+  "anaximander": {
+   "name": "Anaximander",
+   "life": "-0609/-0545",
+   "in_collection": true,
+   "works": []
+  },
+  "annie-hall": {
+   "name": "Annie Hall (Woody Allen, 1977)",
+   "life": "1976/1977",
+   "in_collection": true,
+   "works": []
+  },
+  "aquinas": {
+   "name": "Thomas Aquinas",
+   "life": "1225~/1274",
+   "in_collection": true,
+   "works": []
+  },
+  "aristotle": {
+   "name": "Aristotle",
+   "life": "-0383/-0321",
+   "in_collection": true,
+   "works": []
+  },
+  "augustine": {
+   "name": "Augustine of Hippo",
+   "life": "0354/0430",
+   "in_collection": true,
+   "works": []
+  },
+  "backus": {
+   "name": "John Backus",
+   "life": "1924/2007",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "ial-1959",
+     "title": "The Syntax and Semantics of the Proposed International Algebraic Language",
+     "date": "1959",
+     "kind": "paper"
+    },
+    {
+     "id": "von-neumann-style",
+     "title": "Can Programming Be Liberated from the von Neumann Style?",
+     "date": "1977-10-17",
+     "kind": "lecture"
+    }
+   ]
+  },
+  "bacon": {
+   "name": "Francis Bacon",
+   "life": "1561/1626",
+   "in_collection": true,
+   "works": []
+  },
+  "beowulf-poet": {
+   "name": "The Beowulf poet",
+   "life": "0700/1000",
+   "in_collection": true,
+   "works": []
+  },
+  "bloomfield": {
+   "name": "Leonard Bloomfield",
+   "life": "1887/1949",
+   "in_collection": true,
+   "works": []
+  },
+  "boethius": {
+   "name": "Boethius",
+   "life": "0477~/0524~",
+   "in_collection": true,
+   "works": []
+  },
+  "born": {
+   "name": "Max Born",
+   "life": "1882-12-11/1970-01-05",
+   "places": [{"when":"1882/1908","name":"Breslau","lat":51.108,"lon":17.039,"conf":"high"},{"when":"1909/1920","name":"Göttingen, Berlin, Frankfurt","lat":52.52,"lon":13.405,"conf":"med"},{"when":"1921/1933","name":"Göttingen","lat":51.534,"lon":9.935,"conf":"high"},{"when":"1933/1935","name":"Cambridge, England","lat":52.205,"lon":0.119,"conf":"high"},{"when":"1936/1953","name":"Edinburgh","lat":55.944,"lon":-3.189,"conf":"high"},{"when":"1954/1970","name":"Bad Pyrmont","lat":51.986,"lon":9.256,"conf":"high"}],
+   "role": "physicist; statistical interpretation of the wave function",
+   "works": [
+    {
+     "id": "stossvorgaenge",
+     "title": "Zur Quantenmechanik der Stoßvorgänge",
+     "date": "1926-06",
+     "kind": "paper"
+    }
+   ],
+   "in_collection": false
+  },
+  "caesar": {
+   "name": "Gaius Julius Caesar",
+   "life": "-0099-07/-0043-03-15",
+   "in_collection": true,
+   "works": []
+  },
+  "carroll": {
+   "name": "Lewis Carroll",
+   "life": "1832-01-27/1898-01-14",
+   "in_collection": true,
+   "works": []
+  },
+  "chomsky": {
+   "name": "Noam Chomsky",
+   "life": "1928/..",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "three-models",
+     "title": "Three Models for the Description of Language",
+     "date": "1956",
+     "kind": "paper"
+    },
+    {
+     "id": "syntactic-structures",
+     "title": "Syntactic Structures",
+     "date": "1957",
+     "kind": "book"
+    },
+    {
+     "id": "aspects",
+     "title": "Aspects of the Theory of Syntax",
+     "date": "1965",
+     "kind": "book"
+    }
+   ]
+  },
+  "coleridge": {
+   "name": "Samuel Taylor Coleridge",
+   "life": "1772-10-21/1834-07-25",
+   "in_collection": true,
+   "works": []
+  },
+  "cs-lewis": {
+   "name": "C. S. Lewis",
+   "life": "1898-11-29/1963-11-22",
+   "in_collection": true,
+   "works": []
+  },
+  "culkin": {
+   "name": "John M. Culkin",
+   "life": "1928/1993",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "schoolmans-guide",
+     "title": "A Schoolman's Guide to Marshall McLuhan",
+     "date": "1967-03-18",
+     "kind": "essay"
+    }
+   ]
+  },
+  "derrida": {
+   "name": "Jacques Derrida",
+   "life": "1930-07-15/2004-10-09",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "grammatologie",
+     "title": "De la grammatologie",
+     "date": "1967",
+     "kind": "book"
+    },
+    {
+     "id": "pharmacie",
+     "title": "La pharmacie de Platon",
+     "date": "1968",
+     "kind": "essay"
+    },
+    {
+     "id": "differance",
+     "title": "La différance",
+     "date": "1968-01-27",
+     "kind": "lecture"
+    },
+    {
+     "id": "monolinguisme",
+     "title": "Le monolinguisme de l'autre",
+     "date": "1996",
+     "kind": "book"
+    }
+   ]
+  },
+  "descartes": {
+   "name": "René Descartes",
+   "life": "1596/1650",
+   "in_collection": true,
+   "works": []
+  },
+  "dijkstra": {
+   "name": "Edsger W. Dijkstra",
+   "life": "1930/2002",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "ewd215",
+     "title": "A Case against the GO TO Statement",
+     "date": "1968-03",
+     "kind": "paper"
+    },
+    {
+     "id": "ewd498",
+     "title": "How Do We Tell Truths That Might Hurt?",
+     "date": "1975",
+     "kind": "essay"
+    },
+    {
+     "id": "ewd667",
+     "title": "On the Foolishness of 'Natural Language Programming'",
+     "date": "1978~",
+     "kind": "essay"
+    }
+   ]
+  },
+  "einstein": {
+   "name": "Albert Einstein",
+   "life": "1879/1955",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "ernst-mach-obituary",
+     "title": "Ernst Mach (obituary)",
+     "date": "1916-03",
+     "kind": "essay"
+    },
+    {
+     "id": "geometrie-und-erfahrung",
+     "title": "Geometrie und Erfahrung",
+     "date": "1921-01-27",
+     "kind": "lecture"
+    },
+    {
+     "id": "letter-born-1926",
+     "title": "Letter to Max Born",
+     "date": "1926-12-04",
+     "kind": "letter"
+    },
+    {
+     "id": "physik-und-realitaet",
+     "title": "Physik und Realität",
+     "date": "1936-03",
+     "kind": "essay"
+    },
+    {
+     "id": "letter-hadamard",
+     "title": "Letter to Jacques Hadamard",
+     "date": "1945",
+     "kind": "letter"
+    },
+    {
+     "id": "autobiographisches",
+     "title": "Autobiographical Notes",
+     "date": "1946/1949",
+     "kind": "essay"
+    }
+   ]
+  },
+  "eliot": {
+   "name": "T. S. Eliot",
+   "life": "1888-09-26/1965-01-04",
+   "in_collection": true,
+   "works": []
+  },
+  "emerson": {
+   "name": "Ralph Waldo Emerson",
+   "life": "1803-05-25/1882-04-27",
+   "in_collection": true,
+   "works": []
+  },
+  "flaubert": {
+   "name": "Gustave Flaubert",
+   "life": "1821-12-12/1880-05-08",
+   "in_collection": true,
+   "works": []
+  },
+  "foucault": {
+   "name": "Michel Foucault",
+   "life": "1926-10-15/1984-06-25",
+   "in_collection": true,
+   "works": []
+  },
+  "frege": {
+   "name": "Gottlob Frege",
+   "life": "1848-11-08/1925-07-26",
+   "places": [{"when":"1848/1868","name":"Wismar","lat":53.891,"lon":11.465,"conf":"high"},{"when":"1869/1917","name":"Jena","lat":50.927,"lon":11.589,"conf":"high"},{"when":"1918/1925","name":"Bad Kleinen","lat":53.77,"lon":11.47,"conf":"high"}],
+   "role": "logician; founder of modern logic",
+   "works": [
+    {
+     "id": "begriffsschrift",
+     "title": "Begriffsschrift",
+     "date": "1879",
+     "kind": "book"
+    },
+    {
+     "id": "sinn-und-bedeutung",
+     "title": "Über Sinn und Bedeutung",
+     "date": "1892",
+     "kind": "paper"
+    }
+   ],
+   "in_collection": false
+  },
+  "godel": {
+   "name": "Kurt Gödel",
+   "life": "1906/1978",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "unentscheidbare-saetze",
+     "title": "Über formal unentscheidbare Sätze der Principia Mathematica und verwandter Systeme I",
+     "date": "1930-11-17/1931",
+     "kind": "paper"
+    }
+   ]
+  },
+  "goethe": {
+   "name": "Johann Wolfgang von Goethe",
+   "life": "1749/1832",
+   "in_collection": true,
+   "works": []
+  },
+  "gorgias": {
+   "name": "Gorgias",
+   "life": "-0482/-0375",
+   "in_collection": true,
+   "works": []
+  },
+  "havelock": {
+   "name": "Eric A. Havelock",
+   "life": "1903-06-03/1988-04-04",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "preface-to-plato",
+     "title": "Preface to Plato",
+     "date": "1963",
+     "kind": "book"
+    }
+   ]
+  },
+  "hawking": {
+   "name": "Stephen Hawking",
+   "life": "1942/2018",
+   "in_collection": true,
+   "works": []
+  },
+  "hebrew-bible": {
+   "name": "Hebrew Bible",
+   "life": "-0999/-0199",
+   "in_collection": true,
+   "works": []
+  },
+  "heidegger": {
+   "name": "Martin Heidegger",
+   "life": "1889-09-26/1976-05-26",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "brief-ueber-humanismus",
+     "title": "Brief über den Humanismus",
+     "date": "1946-12",
+     "kind": "letter"
+    }
+   ]
+  },
+  "heisenberg": {
+   "name": "Werner Heisenberg",
+   "life": "1901/1976",
+   "in_collection": true,
+   "works": []
+  },
+  "heraclitus": {
+   "name": "Heraclitus",
+   "life": "-0539/-0479",
+   "in_collection": true,
+   "works": []
+  },
+  "herder": {
+   "name": "Johann Gottfried Herder",
+   "life": "1744/1803",
+   "in_collection": true,
+   "works": []
+  },
+  "hilbert": {
+   "name": "David Hilbert",
+   "life": "1862-01-23/1943-02-14",
+   "places": [{"when":"1862/1894","name":"Königsberg","lat":54.71,"lon":20.51,"conf":"high"},{"when":"1895/1943","name":"Göttingen","lat":51.534,"lon":9.935,"conf":"high"}],
+   "role": "mathematician; axiomatics and formalism",
+   "works": [
+    {
+     "id": "grundlagen-der-geometrie",
+     "title": "Grundlagen der Geometrie",
+     "date": "1899",
+     "kind": "book"
+    }
+   ],
+   "in_collection": false
+  },
+  "hobbes": {
+   "name": "Thomas Hobbes",
+   "life": "1588/1679",
+   "in_collection": true,
+   "works": []
+  },
+  "hofmannsthal": {
+   "name": "Hugo von Hofmannsthal",
+   "life": "1874-02-01/1929-07-15",
+   "in_collection": true,
+   "works": []
+  },
+  "homer": {
+   "name": "Homer",
+   "life": "-0759/-0674",
+   "in_collection": true,
+   "works": []
+  },
+  "horace": {
+   "name": "Horace",
+   "life": "-0064/-0007",
+   "in_collection": true,
+   "works": []
+  },
+  "hugo": {
+   "name": "Victor Hugo",
+   "life": "1802-02-26/1885-05-22",
+   "in_collection": true,
+   "works": []
+  },
+  "humboldt": {
+   "name": "Wilhelm von Humboldt",
+   "life": "1767/1835",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "verschiedenheit",
+     "title": "Über die Verschiedenheit des menschlichen Sprachbaues",
+     "date": "1830/1835",
+     "kind": "treatise"
+    }
+   ]
+  },
+  "hume": {
+   "name": "David Hume",
+   "life": "1711-05-07/1776-08-25",
+   "places": [{"when":"1711/1734","name":"Edinburgh","lat":55.953,"lon":-3.188,"conf":"high"},{"when":"1734/1737","name":"La Flèche, Anjou","lat":47.698,"lon":-0.075,"conf":"high"},{"when":"1737/1763","name":"Edinburgh","lat":55.953,"lon":-3.188,"conf":"high"},{"when":"1763/1766","name":"Paris","lat":48.857,"lon":2.352,"conf":"high"},{"when":"1766/1776","name":"Edinburgh","lat":55.953,"lon":-3.188,"conf":"high"}],
+   "role": "Scottish empiricist; skeptic about causation",
+   "works": [
+    {
+     "id": "treatise",
+     "title": "A Treatise of Human Nature",
+     "date": "1739/1740",
+     "kind": "treatise"
+    },
+    {
+     "id": "enquiry",
+     "title": "An Enquiry Concerning Human Understanding",
+     "date": "1748",
+     "kind": "treatise"
+    }
+   ],
+   "in_collection": false
+  },
+  "ibn-khaldun": {
+   "name": "Ibn Khaldūn",
+   "life": "1332/1406",
+   "in_collection": true,
+   "works": []
+  },
+  "ingerman": {
+   "name": "Peter Zilahy Ingerman",
+   "life": "1930?/..",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "panini-backus-form",
+     "title": "'Pānini-Backus Form' Suggested",
+     "date": "1967-03",
+     "kind": "letter"
+    }
+   ]
+  },
+  "innis": {
+   "name": "Harold Innis",
+   "life": "1894-11-05/1952-11-08",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "bias-of-communication",
+     "title": "The Bias of Communication",
+     "date": "1951",
+     "kind": "book"
+    }
+   ]
+  },
+  "johnson": {
+   "name": "Samuel Johnson",
+   "life": "1709/1784",
+   "in_collection": true,
+   "works": []
+  },
+  "kant": {
+   "name": "Immanuel Kant",
+   "life": "1724/1804",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "kritik-der-reinen-vernunft",
+     "title": "Kritik der reinen Vernunft",
+     "date": "1781",
+     "kind": "treatise"
+    },
+    {
+     "id": "prolegomena",
+     "title": "Prolegomena zu einer jeden künftigen Metaphysik",
+     "date": "1783",
+     "kind": "treatise"
+    },
+    {
+     "id": "anthropologie",
+     "title": "Anthropologie in pragmatischer Hinsicht",
+     "date": "1798",
+     "kind": "book"
+    }
+   ]
+  },
+  "kierkegaard": {
+   "name": "Søren Kierkegaard",
+   "life": "1813-05-05/1855-11-11",
+   "in_collection": true,
+   "works": []
+  },
+  "latin-proverb": {
+   "name": "Latin proverb",
+   "life": "0500/1499",
+   "in_collection": true,
+   "works": []
+  },
+  "levi-strauss": {
+   "name": "Claude Lévi-Strauss",
+   "life": "1908-11-28/2009-10-30",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "tristes-tropiques",
+     "title": "Tristes Tropiques",
+     "date": "1954/1955",
+     "kind": "book"
+    }
+   ]
+  },
+  "lichtenberg": {
+   "name": "Georg Christoph Lichtenberg",
+   "life": "1742/1799",
+   "in_collection": true,
+   "works": []
+  },
+  "locke": {
+   "name": "John Locke",
+   "life": "1632/1704",
+   "in_collection": true,
+   "works": []
+  },
+  "lord": {
+   "name": "Albert B. Lord",
+   "life": "1912-09-15/1991-07-29",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "singer-of-tales",
+     "title": "The Singer of Tales",
+     "date": "1960",
+     "kind": "book"
+    }
+   ]
+  },
+  "lovelace": {
+   "name": "Ada Lovelace",
+   "life": "1815-12-10/1852-11-27",
+   "places": [{"when":"1815/1852","name":"London","lat":51.507,"lon":-0.128,"conf":"high"}],
+   "role": "mathematician; notes on the Analytical Engine",
+   "works": [
+    {
+     "id": "notes-menabrea",
+     "title": "Notes on Menabrea's Sketch of the Analytical Engine",
+     "date": "1843",
+     "kind": "paper"
+    }
+   ],
+   "in_collection": false
+  },
+  "lucretius": {
+   "name": "Lucretius",
+   "life": "-0098?/-0054?",
+   "in_collection": true,
+   "works": []
+  },
+  "mach": {
+   "name": "Ernst Mach",
+   "life": "1838-02-18/1916-02-19",
+   "places": [{"when":"1838/1866","name":"Vienna and Graz","lat":48.208,"lon":16.373,"conf":"med"},{"when":"1867/1895","name":"Prague","lat":50.075,"lon":14.437,"conf":"high"},{"when":"1895/1913","name":"Vienna","lat":48.208,"lon":16.373,"conf":"high"},{"when":"1913/1916","name":"Vaterstetten, near Munich","lat":48.105,"lon":11.768,"conf":"high"}],
+   "role": "physicist; positivist critic of absolute space",
+   "works": [
+    {
+     "id": "die-mechanik",
+     "title": "Die Mechanik in ihrer Entwickelung",
+     "date": "1883",
+     "kind": "book"
+    },
+    {
+     "id": "analyse-der-empfindungen",
+     "title": "Die Analyse der Empfindungen",
+     "date": "1886",
+     "kind": "book"
+    }
+   ],
+   "in_collection": false
+  },
+  "machiavelli": {
+   "name": "Niccolò Machiavelli",
+   "life": "1469/1527",
+   "in_collection": true,
+   "works": []
+  },
+  "mahabharata": {
+   "name": "Mahābhārata (collective)",
+   "life": "-0199/0200",
+   "in_collection": true,
+   "works": []
+  },
+  "mallarme": {
+   "name": "Stéphane Mallarmé",
+   "life": "1842-03-18/1898-09-09",
+   "in_collection": true,
+   "works": []
+  },
+  "mcluhan": {
+   "name": "Marshall McLuhan",
+   "life": "1911-07-21/1980-12-31",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "gutenberg-galaxy",
+     "title": "The Gutenberg Galaxy",
+     "date": "1962",
+     "kind": "book"
+    },
+    {
+     "id": "understanding-media",
+     "title": "Understanding Media",
+     "date": "1964",
+     "kind": "book"
+    },
+    {
+     "id": "medium-is-the-massage",
+     "title": "The Medium Is the Massage",
+     "date": "1967",
+     "kind": "book"
+    }
+   ]
+  },
+  "montaigne": {
+   "name": "Michel de Montaigne",
+   "life": "1533/1592",
+   "in_collection": true,
+   "works": []
+  },
+  "nagesha": {
+   "name": "Nāgeśa Bhaṭṭa",
+   "life": "1670~/1750~",
+   "in_collection": true,
+   "works": []
+  },
+  "naur": {
+   "name": "Peter Naur",
+   "life": "1928/2016",
+   "in_collection": true,
+   "works": []
+  },
+  "neurath": {
+   "name": "Otto Neurath",
+   "life": "1882-12-10/1945-12-22",
+   "in_collection": true,
+   "works": []
+  },
+  "new-testament": {
+   "name": "New Testament",
+   "life": "0048/0125",
+   "in_collection": true,
+   "works": []
+  },
+  "nietzsche": {
+   "name": "Friedrich Nietzsche",
+   "life": "1844-10-15/1900-08-25",
+   "in_collection": true,
+   "works": []
+  },
+  "omar-khayyam": {
+   "name": "ʿUmar Khayyām",
+   "life": "1048/1131",
+   "in_collection": true,
+   "works": []
+  },
+  "ong": {
+   "name": "Walter J. Ong",
+   "life": "1912-11-30/2003-08-12",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "orality-and-literacy",
+     "title": "Orality and Literacy",
+     "date": "1982",
+     "kind": "book"
+    }
+   ]
+  },
+  "oppenheimer": {
+   "name": "J. Robert Oppenheimer",
+   "life": "1904-04-22/1967-02-18",
+   "in_collection": true,
+   "works": []
+  },
+  "orwell": {
+   "name": "George Orwell",
+   "life": "1903-06-25/1950-01-21",
+   "in_collection": true,
+   "works": []
+  },
+  "panini": {
+   "name": "Pāṇini",
+   "life": "-0499/-0300",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "ashtadhyayi",
+     "title": "Aṣṭādhyāyī",
+     "date": "-0399/-0300",
+     "kind": "treatise"
+    }
+   ]
+  },
+  "parry": {
+   "name": "Milman Parry",
+   "life": "1902-06-23/1935-12-03",
+   "places": [{"when":"1902/1923","name":"Oakland and Berkeley","lat":37.872,"lon":-122.259,"conf":"high"},{"when":"1924/1928","name":"Paris","lat":48.857,"lon":2.352,"conf":"high"},{"when":"1929/1935","name":"Harvard, Cambridge MA","lat":42.374,"lon":-71.117,"conf":"high"}],
+   "role": "Homerist; discovered oral-formulaic composition",
+   "works": [
+    {
+     "id": "epithete-traditionnelle",
+     "title": "L'épithète traditionnelle dans Homère",
+     "date": "1928",
+     "kind": "book"
+    }
+   ],
+   "in_collection": false
+  },
+  "pascal": {
+   "name": "Blaise Pascal",
+   "life": "1623/1662",
+   "in_collection": true,
+   "works": []
+  },
+  "paul-of-tarsus": {
+   "name": "Paul of Tarsus",
+   "life": "0005~/0065~",
+   "in_collection": true,
+   "works": []
+  },
+  "philip-k-dick": {
+   "name": "Philip K. Dick",
+   "life": "1928-12-16/1982-03-02",
+   "in_collection": true,
+   "works": []
+  },
+  "plato": {
+   "name": "Plato",
+   "life": "-0427/-0347",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "cratylus",
+     "title": "Cratylus",
+     "date": "-0385~",
+     "kind": "dialogue"
+    },
+    {
+     "id": "phaedrus",
+     "title": "Phaedrus",
+     "date": "-0369~",
+     "kind": "dialogue"
+    },
+    {
+     "id": "seventh-letter",
+     "title": "Seventh Letter",
+     "date": "-0352~",
+     "kind": "letter"
+    }
+   ]
+  },
+  "poincare": {
+   "name": "Henri Poincaré",
+   "life": "1854-04-29/1912-07-17",
+   "places": [{"when":"1854/1872","name":"Nancy","lat":48.692,"lon":6.184,"conf":"high"},{"when":"1873/1912","name":"Paris","lat":48.857,"lon":2.352,"conf":"high"}],
+   "role": "mathematician; conventionalist about geometry",
+   "works": [
+    {
+     "id": "science-et-hypothese",
+     "title": "La Science et l'hypothèse",
+     "date": "1902",
+     "kind": "book"
+    }
+   ],
+   "in_collection": false
+  },
+  "post": {
+   "name": "Emil Post",
+   "life": "1897-02-11/1954-04-21",
+   "places": [{"when":"1897/1903","name":"Augustów","lat":53.843,"lon":22.98,"conf":"high"},{"when":"1904/1954","name":"New York","lat":40.713,"lon":-74.006,"conf":"high"}],
+   "role": "logician; production systems",
+   "works": [
+    {
+     "id": "formal-reductions",
+     "title": "Formal Reductions of the General Combinatorial Decision Problem",
+     "date": "1943",
+     "kind": "paper"
+    }
+   ],
+   "in_collection": false
+  },
+  "postman": {
+   "name": "Neil Postman",
+   "life": "1931-03-08/2003-10-05",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "amusing-ourselves",
+     "title": "Amusing Ourselves to Death",
+     "date": "1985",
+     "kind": "book"
+    }
+   ]
+  },
+  "quine": {
+   "name": "W. V. O. Quine",
+   "life": "1908-06-25/2000-12-25",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "on-what-there-is",
+     "title": "On What There Is",
+     "date": "1948",
+     "kind": "essay"
+    },
+    {
+     "id": "two-dogmas",
+     "title": "Two Dogmas of Empiricism",
+     "date": "1951",
+     "kind": "essay"
+    },
+    {
+     "id": "word-and-object",
+     "title": "Word and Object",
+     "date": "1960",
+     "kind": "book"
+    }
+   ]
+  },
+  "ramsey": {
+   "name": "Frank P. Ramsey",
+   "life": "1903-02-22/1930-01-19",
+   "in_collection": true,
+   "works": []
+  },
+  "rousseau": {
+   "name": "Jean-Jacques Rousseau",
+   "life": "1712/1778",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "essai-origine-langues",
+     "title": "Essai sur l'origine des langues",
+     "date": "1755/1761",
+     "kind": "essay"
+    }
+   ]
+  },
+  "rumi": {
+   "name": "Jalāl al-Dīn Rūmī",
+   "life": "1207/1273",
+   "in_collection": true,
+   "works": []
+  },
+  "russell": {
+   "name": "Bertrand Russell",
+   "life": "1872-05-18/1970-02-02",
+   "places": [{"when":"1872/1889","name":"Richmond, London","lat":51.461,"lon":-0.303,"conf":"high"},{"when":"1890/1915","name":"Cambridge, England","lat":52.205,"lon":0.119,"conf":"med"},{"when":"1916/1937","name":"London","lat":51.507,"lon":-0.128,"conf":"med"},{"when":"1938/1944","name":"United States","lat":41.789,"lon":-87.6,"conf":"low"},{"when":"1944/1949","name":"Cambridge, England","lat":52.205,"lon":0.119,"conf":"high"},{"when":"1950/1970","name":"Penrhyndeudraeth, Wales","lat":52.93,"lon":-4.06,"conf":"high"}],
+   "role": "logician and philosopher",
+   "works": [
+    {
+     "id": "on-denoting",
+     "title": "On Denoting",
+     "date": "1905",
+     "kind": "paper"
+    },
+    {
+     "id": "principia-mathematica",
+     "title": "Principia Mathematica (with A. N. Whitehead)",
+     "date": "1910/1913",
+     "kind": "treatise",
+     "coauthors": [
+      "whitehead"
+     ]
+    }
+   ],
+   "in_collection": false
+  },
+  "sartre": {
+   "name": "Jean-Paul Sartre",
+   "life": "1905-06-21/1980-04-15",
+   "places": [{"when":"1905/1980","name":"Paris","lat":48.857,"lon":2.352,"conf":"high"}],
+   "role": "existentialist philosopher",
+   "works": [
+    {
+     "id": "existentialisme-humanisme",
+     "title": "L'existentialisme est un humanisme",
+     "date": "1945-10-29",
+     "kind": "lecture"
+    }
+   ],
+   "in_collection": false
+  },
+  "saussure": {
+   "name": "Ferdinand de Saussure",
+   "life": "1857-11-26/1913-02-22",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "cours",
+     "title": "Cours de linguistique générale",
+     "date": "1906/1911",
+     "kind": "lecture",
+     "note": "published from students' notes 1916"
+    }
+   ]
+  },
+  "shakespeare": {
+   "name": "William Shakespeare",
+   "life": "1564/1616",
+   "in_collection": true,
+   "works": []
+  },
+  "socrates": {
+   "name": "Socrates",
+   "life": "-0469/-0398",
+   "in_collection": true,
+   "works": []
+  },
+  "star-trek": {
+   "name": "Star Trek",
+   "life": "1966/..",
+   "in_collection": true,
+   "works": []
+  },
+  "stephenson": {
+   "name": "Neal Stephenson",
+   "life": "1959/..",
+   "in_collection": true,
+   "works": []
+  },
+  "talleyrand": {
+   "name": "Charles-Maurice de Talleyrand-Périgord",
+   "life": "1754/1838",
+   "in_collection": true,
+   "works": []
+  },
+  "thucydides": {
+   "name": "Thucydides",
+   "life": "-0459/-0399",
+   "in_collection": true,
+   "works": []
+  },
+  "tolkien": {
+   "name": "J. R. R. Tolkien",
+   "life": "1892-01-03/1973-09-02",
+   "in_collection": true,
+   "works": []
+  },
+  "turing": {
+   "name": "Alan Turing",
+   "life": "1912/1954",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "computable-numbers",
+     "title": "On Computable Numbers, with an Application to the Entscheidungsproblem",
+     "date": "1936",
+     "kind": "paper"
+    },
+    {
+     "id": "computing-machinery",
+     "title": "Computing Machinery and Intelligence",
+     "date": "1950",
+     "kind": "paper"
+    }
+   ]
+  },
+  "whitehead": {
+   "name": "Alfred North Whitehead",
+   "life": "1861-02-15/1947-12-30",
+   "places": [{"when":"1861/1879","name":"Ramsgate","lat":51.336,"lon":1.416,"conf":"high"},{"when":"1880/1909","name":"Cambridge, England","lat":52.205,"lon":0.119,"conf":"high"},{"when":"1910/1923","name":"London","lat":51.507,"lon":-0.128,"conf":"high"},{"when":"1924/1947","name":"Harvard, Cambridge MA","lat":42.374,"lon":-71.117,"conf":"high"}],
+   "role": "mathematician; co-author of Principia",
+   "works": [],
+   "in_collection": false
+  },
+  "wittgenstein": {
+   "name": "Ludwig Wittgenstein",
+   "life": "1889-04-26/1951-04-29",
+   "in_collection": true,
+   "works": [
+    {
+     "id": "tractatus",
+     "title": "Logisch-philosophische Abhandlung (Tractatus)",
+     "date": "1918/1921",
+     "kind": "treatise"
+    },
+    {
+     "id": "investigations",
+     "title": "Philosophische Untersuchungen",
+     "date": "1936/1949",
+     "kind": "book",
+     "note": "published 1953"
+    }
+   ]
+  },
+  "xenophanes": {
+   "name": "Xenophanes",
+   "life": "-0569/-0474",
+   "in_collection": true,
+   "works": []
+  }
+ },
+ "ideas": {
+  "hilbert-program": {
+   "name": "Hilbert's program",
+   "date": "1920/1931",
+   "people": [
+    "hilbert"
+   ],
+   "summary": "prove mathematics complete and consistent by finitary means"
+  },
+  "entscheidungsproblem": {
+   "name": "Entscheidungsproblem",
+   "date": "1928",
+   "people": [
+    "hilbert"
+   ],
+   "summary": "find a procedure deciding every first-order statement"
+  },
+  "logical-empiricism": {
+   "name": "Logical empiricism",
+   "date": "1924/1950",
+   "people": [
+    "neurath"
+   ],
+   "summary": "meaning is verification; analytic/synthetic divide"
+  },
+  "natural-language-programming": {
+   "name": "Natural-language programming",
+   "date": "1960/..",
+   "people": [],
+   "summary": "programming computers in ordinary human language"
+  }
+ },
+ "edges": [
+  {
+   "from": "work:kant/prolegomena",
+   "to": "work:hume/enquiry",
+   "kind": "responds",
+   "valence": 0,
+   "aspect": "accepts Hume's problem about causation; rejects his skeptical answer",
+   "conf": "high",
+   "basis": "explicit",
+   "quote": {
+    "lang": "de",
+    "orig": "…die Erinnerung des David Hume war eben dasjenige, was mir vor vielen Jahren zuerst den dogmatischen Schlummer unterbrach…",
+    "trans": "…the remark of David Hume was the very thing that, many years ago, first interrupted my dogmatic slumber…",
+    "ref": "Preface"
+   }
+  },
+  {
+   "from": "work:kant/kritik-der-reinen-vernunft",
+   "to": "work:hume/treatise",
+   "kind": "responds",
+   "valence": 0,
+   "aspect": "causality as a category the mind supplies, against Hume's habit-based account",
+   "conf": "high",
+   "basis": "scholarly"
+  },
+  {
+   "from": "work:einstein/ernst-mach-obituary",
+   "to": "work:mach/die-mechanik",
+   "kind": "cites",
+   "valence": 1,
+   "aspect": "praises Mach's critique of absolute space as a forerunner of relativity",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:einstein/autobiographisches",
+   "to": "person:mach",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "Mach's epistemology now 'essentially untenable'; concepts are free creations",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:einstein/geometrie-und-erfahrung",
+   "to": "work:poincare/science-et-hypothese",
+   "kind": "cites",
+   "valence": 0,
+   "aspect": "grants Poincaré's conventionalism sub specie aeterni, keeps practical geometry empirical",
+   "conf": "high",
+   "basis": "explicit",
+   "quote": {
+    "lang": "en",
+    "orig": "Sub specie aeterni Poincaré, in my opinion, is right.",
+    "trans": null,
+    "ref": "Sidelights on Relativity trans."
+   }
+  },
+  {
+   "from": "work:einstein/geometrie-und-erfahrung",
+   "to": "work:hilbert/grundlagen-der-geometrie",
+   "kind": "cites",
+   "valence": 1,
+   "aspect": "credits axiomatics with separating logical form from intuitive content",
+   "conf": "med",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:einstein/letter-born-1926",
+   "to": "work:born/stossvorgaenge",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "rejects irreducible chance in quantum mechanics",
+   "conf": "high",
+   "basis": "explicit",
+   "quote": {
+    "lang": "de",
+    "orig": "Die Quantenmechanik ist sehr achtunggebietend. Aber eine innere Stimme sagt mir, daß das doch nicht der wahre Jakob ist.",
+    "trans": "Quantum mechanics is very impressive. But an inner voice tells me that it is not yet the real thing.",
+    "ref": "4 Dec 1926"
+   }
+  },
+  {
+   "from": "work:wittgenstein/tractatus",
+   "to": "person:frege",
+   "kind": "cites",
+   "valence": 1,
+   "aspect": "owes much of the stimulus for his thoughts to Frege",
+   "conf": "high",
+   "basis": "explicit",
+   "quote": {
+    "lang": "de",
+    "orig": "…daß ich den großartigen Werken Freges und den Arbeiten meines Freundes Herrn Bertrand Russell einen großen Teil der Anregung zu meinen Gedanken schulde.",
+    "trans": "…that I owe a great part of the stimulus to my thoughts to the great works of Frege and the writings of my friend Mr Bertrand Russell.",
+    "ref": "Preface"
+   }
+  },
+  {
+   "from": "work:wittgenstein/tractatus",
+   "to": "person:russell",
+   "kind": "cites",
+   "valence": 1,
+   "aspect": "same acknowledgement; logical analysis of language",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:wittgenstein/investigations",
+   "to": "work:wittgenstein/tractatus",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "recognizes 'grave mistakes' in his first book; meaning as use, not picture",
+   "conf": "high",
+   "basis": "explicit",
+   "quote": {
+    "lang": "en",
+    "orig": "…I have been forced to recognize grave mistakes in what I wrote in that first book.",
+    "trans": null,
+    "ref": "Preface (Anscombe trans.)"
+   }
+  },
+  {
+   "from": "work:godel/unentscheidbare-saetze",
+   "to": "work:russell/principia-mathematica",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "shows Principia-type systems contain true but unprovable sentences",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:godel/unentscheidbare-saetze",
+   "to": "idea:hilbert-program",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "second theorem: consistency cannot be proved within the system",
+   "conf": "high",
+   "basis": "scholarly"
+  },
+  {
+   "from": "work:turing/computable-numbers",
+   "to": "idea:entscheidungsproblem",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "shows no general decision procedure exists",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:turing/computing-machinery",
+   "to": "work:lovelace/notes-menabrea",
+   "kind": "quotes",
+   "valence": -1,
+   "aspect": "'Lady Lovelace's Objection': machines can only do what we order",
+   "conf": "high",
+   "basis": "explicit",
+   "quote": {
+    "lang": "en",
+    "orig": "The Analytical Engine has no pretensions to originate anything.",
+    "trans": null,
+    "ref": "§6 (quoting Lovelace, Note G)"
+   }
+  },
+  {
+   "from": "work:quine/on-what-there-is",
+   "to": "work:russell/on-denoting",
+   "kind": "cites",
+   "valence": 1,
+   "aspect": "uses the theory of descriptions to dissolve non-being",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:quine/two-dogmas",
+   "to": "idea:logical-empiricism",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "rejects the analytic/synthetic distinction and reductionism",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:derrida/grammatologie",
+   "to": "work:rousseau/essai-origine-langues",
+   "kind": "responds",
+   "valence": 0,
+   "aspect": "reads Rousseau's privileging of speech against itself",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:derrida/grammatologie",
+   "to": "work:saussure/cours",
+   "kind": "responds",
+   "valence": 0,
+   "aspect": "keeps the sign's differential nature; rejects speech's priority over writing",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:derrida/grammatologie",
+   "to": "work:levi-strauss/tristes-tropiques",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "'The Violence of the Letter': contests the Writing Lesson's innocent-orality myth",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:derrida/pharmacie",
+   "to": "work:plato/phaedrus",
+   "kind": "responds",
+   "valence": 0,
+   "aspect": "pharmakon as remedy and poison: writing already inside speech",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:heidegger/brief-ueber-humanismus",
+   "to": "work:sartre/existentialisme-humanisme",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "rejects humanism and Sartre's existence-precedes-essence",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:chomsky/aspects",
+   "to": "work:humboldt/verschiedenheit",
+   "kind": "quotes",
+   "valence": 1,
+   "aspect": "adopts 'infinite use of finite means' as generative grammar's task",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:backus/ial-1959",
+   "to": "work:post/formal-reductions",
+   "kind": "influenced",
+   "valence": 1,
+   "aspect": "metalinguistic formulae adapted from Post's productions (Backus's recollection)",
+   "conf": "med",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:ingerman/panini-backus-form",
+   "to": "work:panini/ashtadhyayi",
+   "kind": "cites",
+   "valence": 1,
+   "aspect": "Pāṇini used an equivalent notation two millennia earlier",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:ingerman/panini-backus-form",
+   "to": "work:backus/ial-1959",
+   "kind": "cites",
+   "valence": 0,
+   "aspect": "credits Backus but proposes sharing the name",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:mcluhan/gutenberg-galaxy",
+   "to": "work:innis/bias-of-communication",
+   "kind": "influenced",
+   "valence": 1,
+   "aspect": "McLuhan called his book a footnote to Innis",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:ong/orality-and-literacy",
+   "to": "person:mcluhan",
+   "kind": "influenced",
+   "valence": 1,
+   "aspect": "McLuhan's student; media restructure thought",
+   "conf": "high",
+   "basis": "scholarly"
+  },
+  {
+   "from": "work:ong/orality-and-literacy",
+   "to": "work:havelock/preface-to-plato",
+   "kind": "cites",
+   "valence": 1,
+   "aspect": "adopts the orality–literacy shift in Greece",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:culkin/schoolmans-guide",
+   "to": "work:mcluhan/understanding-media",
+   "kind": "influenced",
+   "valence": 1,
+   "aspect": "popular summary of McLuhan for teachers",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:postman/amusing-ourselves",
+   "to": "work:mcluhan/understanding-media",
+   "kind": "responds",
+   "valence": 0,
+   "aspect": "revises 'the medium is the message' to 'the medium is the metaphor'",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:havelock/preface-to-plato",
+   "to": "work:plato/phaedrus",
+   "kind": "influenced",
+   "valence": 0,
+   "aspect": "reads Plato as literacy's attack on oral memory",
+   "conf": "med",
+   "basis": "editorial"
+  },
+  {
+   "from": "work:lord/singer-of-tales",
+   "to": "work:parry/epithete-traditionnelle",
+   "kind": "influenced",
+   "valence": 1,
+   "aspect": "completes Parry's oral-formulaic theory",
+   "conf": "high",
+   "basis": "explicit"
+  },
+  {
+   "from": "work:dijkstra/ewd667",
+   "to": "idea:natural-language-programming",
+   "kind": "responds",
+   "valence": -1,
+   "aspect": "formal symbols are a privilege; natural language invites nonsense",
+   "conf": "high",
+   "basis": "explicit"
+  }
+ ]
+}

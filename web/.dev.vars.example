@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local testing with `npx wrangler pages dev ../dist-release`.
+# Local runs have no Cloudflare Access, so act as this signed-in email. Never deploy this.
+DEV_EMAIL=you@example.com
+# Who may edit the curator's text (in production this is a Pages secret; see wrangler.toml).
+CURATOR_EMAILS=you@example.com

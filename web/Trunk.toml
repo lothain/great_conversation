@@ -1,0 +1,27 @@
+[build]
+target = "index.html"
+dist = "dist"
+# Shaders are embedded in the binary; data (including data/baked) is copied next to the page.
+
+[serve]
+addresses = ["127.0.0.1"]
+port = 8086
+
+[watch]
+# Rebuild when the renderer, the scene layer, or the data change, not only the page.
+watch = [".", "../crates", "../data"]
+# The bake step writes data/baked; don't let that trigger another build.
+ignore = ["dist", "../data/baked"]
+
+# Bake the page model and coastline field before every build, so the page never waits for
+# the globe and the globe never computes coastlines in the browser.
+[[hooks]]
+stage = "pre_build"
+command = "cargo"
+command_arguments = ["run", "-q", "--release", "-p", "aph-scene", "--features", "bake", "--bin", "aph-bake"]
+
+# Stamp what Trunk doesn't hash (our modules and the data), and set cache headers for Pages.
+[[hooks]]
+stage = "post_build"
+command = "node"
+command_arguments = ["tools/stamp.mjs"]

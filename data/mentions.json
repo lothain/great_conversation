@@ -1,0 +1,14 @@
+{
+ "_doc": "Mentions (@): one utterance calling back to another. Lighter than graph.json replies: utterance-to-utterance (entry ids, not works), and allowed to be an echo, allusion or shared formula with no claim of direct influence. kind: callback | echo | allusion | formula | quotes. basis: explicit | scholarly | editorial. note: <= 25 words on what is echoed.",
+ "mentions": [
+  {
+   "from": "metres-of-boethius-6-1",
+   "to": "beowulf-258-259",
+   "kind": "formula",
+   "phrase": "wordhord onleac",
+   "note": "Wisdom unlocks the word-hoard in the same words Beowulf uses: a stock Old English speech formula, not proof that the translator knew Beowulf.",
+   "basis": "editorial",
+   "conf": "med"
+  }
+ ]
+}

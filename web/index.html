@@ -1,0 +1,1805 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Great Conversation</title>
+<link rel="stylesheet" href="fonts/eb-garamond.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link data-trunk rel="copy-file" href="favicon.svg" />
+<link data-trunk rel="rust" href="../crates/aph-globe" data-bin="aph-globe" data-bindgen-target="web" data-wasm-opt="z" data-wasm-opt-params="--enable-bulk-memory --enable-bulk-memory-opt --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue --enable-mutable-globals" />
+<link data-trunk rel="copy-file" href="globe.js" />
+<link data-trunk rel="copy-file" href="account.js" />
+<link data-trunk rel="copy-dir" href="../data" />
+<link data-trunk rel="copy-dir" href="portraits" />
+<link data-trunk rel="copy-dir" href="fonts" />
+<style>
+  body.globe-window > :not(#globeHost) { display: none !important; }
+  body.globe-window #globeHost { position: fixed; inset: 0; }
+  #globeCanvas { display: block; width: 100%; height: 100%; outline: none; }
+  @font-face { font-family: "DSEG7"; src: url("fonts/DSEG7Classic-Bold.woff2") format("woff2"); font-display: block; }
+  @font-face { font-family: "DSEG14"; src: url("fonts/DSEG14Classic-Bold.woff2") format("woff2"); font-display: block; }
+  :root {
+    --top: #2a2520; --top-ink: #efe4c8; --top-ink-2: #cdbd98;
+    --chan: #e3d4ae; --main: #f4ecd6; --side: #eadcbb; --panel: #efe4c8; --panel-2: #e4d6b2;
+    --ink: #3b2f22; --ink-2: #6b5a44; --rule: #cdb98d; --accent: #8a2f1d; --gold: #c9971f; --dot: #5a4632;
+    --lcd: #f2b544; --lcd-bg: #1b1713;
+    --left-w: 300px; --side-w: 340px; --globe-h: 280px; --thread-w: 380px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--top); color: var(--ink); font-family: "EB Garamond", Georgia, serif; overflow: hidden; }
+  button { font-family: inherit; }
+
+  /* ================= top bar ================= */
+  #topbar { height: 56px; display: flex; align-items: center; gap: 18px; padding: 0 16px; color: var(--top-ink); }
+  #topbar h1 { font-size: 24px; font-weight: 400; margin: 0; white-space: nowrap; letter-spacing: .01em; }
+  #transport { display: flex; gap: 2px; }
+  #transport button { width: 30px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--top-ink); cursor: pointer; display: grid; place-items: center; }
+  #transport button:hover { background: rgba(239,228,200,.14); }
+  #transport button#play { background: var(--top-ink); color: var(--top); width: 32px; border-radius: 50%; height: 32px; margin: 0 4px; }
+  #transport svg { width: 16px; height: 16px; fill: currentColor; }
+  #scrub { flex: 1; position: relative; height: 34px; min-width: 120px; }
+  #slider { position: absolute; left: 0; right: 0; top: 2px; width: 100%; margin: 0; accent-color: #d9a441; }
+  #ticks { position: absolute; left: 0; right: 0; top: 19px; height: 14px; font-size: 11px; color: var(--top-ink-2); }
+  #ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  /* The only thing left of the top bar: a floating, circular avatar in the top right. */
+  #me { position: fixed; top: 10px; right: 12px; z-index: 46; width: 40px; height: 40px; padding: 0; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(42,37,32,.85); border: 1px solid rgba(239,228,200,.35); box-shadow: 0 4px 14px rgba(0,0,0,.35); cursor: pointer; }
+  #me:hover, #me[aria-expanded="true"] { border-color: rgba(239,228,200,.7); }
+  #me .mename, #me .caret { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  #me:hover, #me[aria-expanded="true"] { background: rgba(239,228,200,.18); }
+  #me .meav { width: 32px; height: 32px; border-radius: 50%; background: #6b5a44; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; color: var(--top-ink); }
+  #me .caret { font-size: 11px; color: var(--top-ink-2); }
+  #bottombar { position: absolute; left: 0; right: 0; bottom: 0; height: 46px; background: var(--top); border-top: 1px solid #000; display: flex; align-items: center; gap: 18px; padding: 0 0 0 14px; color: var(--top-ink); }
+  #bottombar #clock { order: 3; height: 100%; flex: none; display: flex; flex-direction: column; justify-content: center; padding: 0 22px 0 16px; border-left: 1px solid #000; }   /* bottom right: frames the scrubber */
+  #bottombar #transport { order: 1; } #bottombar #scrub { order: 2; }
+  #gear:hover { background: rgba(239,228,200,.25); }
+
+  /* ================= app shell ================= */
+  #app { position: absolute; top: 0; left: 0; right: 0; bottom: 46px; display: flex; border-top: 1px solid #000; }
+  #left { width: var(--left-w); flex: none; background: var(--chan); display: flex; flex-direction: column; min-width: 200px; }
+  #server { padding: 12px 14px; font-weight: 600; font-size: 16px; border-bottom: 1px solid var(--rule); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  #chanList { flex: 1; overflow-y: auto; padding: 8px 8px 16px; min-height: 60px; }
+  .cat { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); margin: 14px 6px 4px; cursor: pointer; user-select: none; display: flex; gap: 4px; }
+  .cat::before { content: "▾"; font-size: 10px; }
+  .cat.closed::before { content: "▸"; }
+  .cat.closed + .chans { display: none; }
+  .ch { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 5px; color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1.25; }
+  .ch:hover { background: rgba(90,70,50,.08); color: var(--ink); }
+  .ch.on { background: rgba(90,70,50,.16); color: var(--ink); font-weight: 600; }
+  .ch.empty { opacity: .45; }
+  .ch .hash { font-size: 18px; opacity: .6; width: 14px; text-align: center; }
+  .ch .sw { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+  .ch .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ch .ct { font-size: 11.5px; background: var(--ink-2); color: var(--panel); border-radius: 8px; padding: 0 6px; }
+  .ch.empty .ct { display: none; }
+  .ch .ct:empty { display: none; }
+  .ch.unread .nm { color: var(--ink); font-weight: 600; }
+  .ch .ct { background: var(--accent); color: #fff; }
+
+  /* the clock: a 7-segment display with a blinking cursor */
+  #clock { flex: none; background: var(--lcd-bg); padding: 0 14px; border-top: 1px solid #000; }
+  .lcd { display: flex; align-items: baseline; gap: 10px; color: var(--lcd); text-shadow: 0 0 6px rgba(242,181,68,.55); white-space: nowrap; }
+  .cell { position: relative; display: inline-block; }
+  .cell .g { position: absolute; right: 0; top: 0; color: var(--lcd); opacity: .09; text-shadow: none; font-style: normal; }
+  .cell b { position: relative; font-weight: normal; }
+  .d7 { font-family: "DSEG7", monospace; font-size: 22px; }
+  .d7.date { letter-spacing: -1px; }
+  .lcd { gap: 8px !important; }
+  .m14 { font-family: "DSEG14", monospace; font-size: 13px; }
+  .m14[hidden] { display: none; }
+  .colon { animation: blink 1s steps(1) infinite; }   /* the blinking colon: the clock is running */
+  .cursorUNUSED { display: inline-block; width: 12px; height: 4px; background: var(--lcd); box-shadow: 0 0 6px rgba(242,181,68,.6); align-self: flex-end; margin-bottom: 4px; animation: blink 1.06s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .cksub { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #8d7a5c; margin-top: 4px; }
+
+  #main { flex: 1; min-width: 0; background: var(--main); display: flex; flex-direction: column; position: relative; }
+  #chanHead { height: 48px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--rule); box-shadow: 0 1px 2px rgba(0,0,0,.05); position: relative; }
+  #chanHead .hash { font-size: 22px; color: var(--ink-2); }
+  #chanHead .name { font-weight: 600; font-size: 17px; white-space: nowrap; }
+  #chanHead .topic { color: var(--ink-2); font-size: 14px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-left: 1px solid var(--rule); padding-left: 10px; }
+  #chanHead .count { margin-left: auto; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+  #chanSelect { display: none; }
+  #chanMenuBtn { background: none; border: 0; font-size: 22px; line-height: 1; color: var(--ink-2); cursor: pointer; padding: 2px 6px; border-radius: 6px; }
+  #chanMenuBtn:hover { background: rgba(90,70,50,.1); color: var(--ink); }
+  #chanMenu { position: absolute; right: 12px; top: 44px; z-index: 25; padding: 6px; min-width: 240px; display: flex; flex-direction: column; }
+  #chanMenu[hidden] { display: none; }
+  #chanMenu button { text-align: left; background: none; border: 0; font-size: 15px; padding: 7px 10px; border-radius: 5px; cursor: pointer; color: var(--ink); }
+  #chanMenu button:hover { background: var(--panel-2); }
+  #centerRow { flex: 1; display: flex; min-height: 0; position: relative; }
+  #feedCol { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #feed { flex: 1; overflow-x: hidden; overflow-y: auto; padding: 8px 0 8px; display: flex; flex-direction: column; }
+  #feed > :first-child { margin-top: auto; }
+  #feed > * { flex: none; min-width: 0; }   /* pack messages against the input */
+  #typing { height: 22px; padding: 0 20px; font-size: 13.5px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+  #typing b { color: var(--ink); }
+  .dots { display: inline-flex; gap: 3px; }
+  .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-2); animation: bounce 1.2s infinite; }
+  .dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
+  .compose { display: flex; gap: 8px; align-items: flex-end; margin: 0 16px 14px; padding: 6px 6px 6px 14px; background: #fff9ea; border: 1px solid var(--rule); border-radius: 8px; }
+  .compose:focus-within { border-color: var(--ink-2); }
+  .compose textarea { flex: 1; border: 0; background: transparent; resize: none; font: inherit; font-size: 16px; line-height: 1.4; color: var(--ink); max-height: 160px; padding: 5px 0; outline: none; }
+  .compose button { font: inherit; font-size: 14px; background: var(--ink); color: var(--panel); border: 0; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  .compose button:disabled { opacity: .4; cursor: default; }
+  .compose.disabled { opacity: .55; cursor: not-allowed; background: var(--panel-2); }
+  .compose.disabled textarea, .compose.disabled button { pointer-events: none; }
+  .readonly { margin: 0 16px 16px; padding: 11px 14px; background: var(--panel-2); border-radius: 8px; color: var(--ink-2); font-style: italic; font-size: 15px; display: flex; gap: 10px; align-items: center; }
+  .readonly button { font: inherit; font-style: normal; font-size: 13.5px; background: none; border: 1px solid var(--ink-2); color: var(--ink); border-radius: 6px; padding: 2px 10px; cursor: pointer; margin-left: auto; white-space: nowrap; }
+  #threadComposer .compose, #threadComposer .readonly { margin: 0 12px 12px; }
+  .msg.mine .av { background: #6b5a44; font-size: 12px; }
+  .msg.mine.other .av { background: #8a6f4e; }
+  .mine-tools { position: absolute; right: 14px; top: -10px; display: none; gap: 2px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 2px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+  .msg.mine:hover .mine-tools, .msg.mine:focus-within .mine-tools { display: flex; }
+  .msg.mine.editing .mine-tools { display: none; }
+  .mine-tools button { font: 13px "EB Garamond", Georgia, serif; background: none; border: 0; border-radius: 4px; padding: 2px 8px; cursor: pointer; color: var(--ink); }
+  .mine-tools button:hover { background: var(--panel-2); }
+  .mine-tools button[data-del]:hover { color: var(--accent); }
+  .compose.editbox { margin: 4px 0 2px; flex-direction: column; align-items: stretch; }
+  .editbtns { display: flex; justify-content: flex-end; gap: 6px; }
+  .compose button.ghost { background: none; color: var(--ink-2); border: 1px solid var(--rule); }
+  .msg.mine { padding-top: 8px; }
+  .msg.curator.editable:hover .mine-tools, .msg.curator.editable:focus-within .mine-tools { display: flex; }
+  .msg.curator.editing .mine-tools { display: none; }
+  .whoami { margin-top: 8px; padding: 8px 10px; border: 1px dashed var(--rule); border-radius: 8px; font-size: 14.5px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .tp-row .tp-edit { visibility: hidden; } .tp-row:hover .tp-edit, .tp-edit:focus { visibility: visible; }
+  .tp-edit { margin-left: 8px; font-size: 12px; background: none; border: 1px solid var(--rule); border-radius: 4px; padding: 0 6px; cursor: pointer; color: var(--ink-2); }
+  .tp-edit:hover { color: var(--ink); background: var(--panel-2); }
+  .msg.mine .when { font-size: 12px; color: var(--ink-2); font-weight: 400; margin-left: 6px; }
+  .body.plain-text { white-space: pre-wrap; }
+  #composerUNUSED { margin: 0 16px 16px; padding: 11px 14px; background: var(--panel-2); border-radius: 8px; color: var(--ink-2); font-style: italic; font-size: 15px; }
+
+  /* messages */
+  .msg { display: grid; grid-template-columns: 44px 1fr; gap: 0 14px; padding: 6px 18px 4px; position: relative; }
+  .msg:hover, .msg.hl { background: rgba(90,70,50,.06); }
+  .msg.flash, .pu.flash { animation: flash 1.6s; }
+  .msg.arrive { animation: arrive .5s ease-out; }
+  @keyframes arrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes flash { 0%, 40% { background: #ead89f; } 100% { background: transparent; } }
+  .msg.cont { padding-top: 1px; }
+  .msg .from { font-size: 14px; color: var(--ink-2); margin: 1px 0 2px; }
+  .msg blockquote.mq { margin: 0; padding: 1px 0 1px 12px; border-left: 3px solid var(--rule); }
+  .av { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #f4ead2; font-weight: 600; font-size: 16px; cursor: pointer; filter: sepia(.15); flex: none; }
+  .av.small { visibility: hidden; height: 4px; }
+  .msg.cont:hover .av.small { visibility: visible; width: 26px; height: 26px; margin: 0 9px -22px; font-size: 11px; }
+  .who { font-weight: 600; font-size: 16px; cursor: pointer; }
+  .who:hover { text-decoration: underline; }
+  .rkind { font-size: 12px; color: var(--ink-2); font-weight: 400; margin-left: 6px; }
+  .body { font-size: 17px; line-height: 1.4; }
+  .body .orig.foreign { font-style: italic; font-size: 15px; color: var(--ink-2); }
+  .body .paraphrase, .pu-q .paraphrase { font-style: italic; color: var(--ink-2); font-size: 15.5px; }
+  .body .paraphrase::before, .pu-q .paraphrase::before { content: "no direct quote · "; font-style: normal; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; }
+  .gl { color: var(--ink-2); font-size: .85em; }
+  /* right-to-left scripts read from the right */
+  :lang(he), :lang(ar), :lang(fa), :lang(arc), :lang(syr), :lang(yi) { direction: rtl; text-align: right; unicode-bidi: isolate; }
+  span:lang(he), span:lang(ar), span:lang(fa) { display: block; }
+  .mref { grid-column: 2; display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-2); margin: 2px 0 1px; cursor: pointer; position: relative; min-width: 0; }
+  .mref::before { content: ""; position: absolute; left: -36px; top: 9px; width: 30px; height: 10px; border: 2px solid var(--rule); border-right: 0; border-bottom: 0; border-top-left-radius: 6px; }
+  .mref .at, .mentioned .at { background: rgba(61,90,128,.14); color: #2f4c72; font-weight: 600; border-radius: 4px; padding: 0 4px; white-space: nowrap; cursor: pointer; }
+  .mref .snip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; }
+  .mref .mk { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+  .mentioned { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
+  /* reply preview (default) – click to open the thread panel */
+  /* replies, inline: collapsed (a chip) or preview (up to 3 replies); "open" moves the thread to the panel */
+  .tchip { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; padding: 5px 12px 5px 6px; border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 4px 10px 10px 4px; background: #fbf5e6; cursor: pointer; font-size: 13px; }
+  .tchip:hover { background: #f4ead2; }
+  .tchip .count, .tp-head .count { font-weight: 600; color: var(--ink); letter-spacing: .02em; }
+  .tp-caret { width: 24px; height: 22px; flex: none; display: grid; place-items: center; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--ink-2); cursor: pointer; }
+  .tp-caret svg { width: 15px; height: 15px; }
+  .tp-caret:hover { background: rgba(90,70,50,.12); color: var(--ink); }
+  .tprev { margin-top: 8px; max-width: 760px; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 4px 10px 10px 4px; background: #fbf5e6; }
+  .tprev.inpanel { border-left-color: var(--gold); }
+  .tp-head { display: flex; align-items: center; gap: 4px; padding: 5px 6px 5px 6px; border-bottom: 1px solid rgba(90,70,50,.12); font-size: 13px; color: var(--ink-2); }
+  .tp-head .count { margin-right: auto; }
+  .tp-head .count small { font-weight: 400; color: var(--ink-2); margin-left: 6px; }
+  .tp-btn { font: 13px "EB Garamond", Georgia, serif; background: none; border: 0; border-radius: 5px; padding: 2px 8px; cursor: pointer; color: var(--ink-2); }
+  .tp-btn:hover { background: rgba(90,70,50,.1); color: var(--ink); }
+  .tp-btn.primary { color: var(--accent); font-weight: 600; }
+  .tp-rows { padding: 4px 0 6px; }
+  .tp-row { display: grid; grid-template-columns: 22px 1fr; gap: 0 9px; padding: 4px 12px; align-items: start; }
+  .tp-row + .tp-row { border-top: 1px dashed rgba(90,70,50,.12); }
+  .tp-row .mini { margin: 2px 0 0; width: 22px; height: 22px; font-size: 10px; border-color: #fbf5e6; }
+  .tp-row .nm { font-weight: 600; font-size: 14.5px; }
+  .tp-row .nm small { font-weight: 400; font-size: 12px; color: var(--ink-2); margin-left: 6px; }
+  .tp-row .tx { font-size: 15px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tp-more { display: block; width: 100%; text-align: left; padding: 4px 12px 6px 43px; font: italic 13px "EB Garamond", Georgia, serif; color: var(--accent); background: none; border: 0; cursor: pointer; }
+  .tp-more:hover { text-decoration: underline; }
+  .mini { width: 18px; height: 18px; border-radius: 50%; color: #f4ead2; font-size: 9px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; margin-right: -7px; border: 1.5px solid var(--panel-2); background-size: cover; background-position: center 20%; flex: none; align-self: center; }
+  .minis { display: inline-flex; padding-right: 7px; }
+  .sysmsg { display: flex; align-items: baseline; gap: 10px; padding: 3px 18px 3px 28px; font-size: 14.5px; color: var(--ink-2); }
+  .sysmsg .sic { width: 22px; text-align: center; color: #4f7a3a; font-weight: 600; }
+  .sysmsg.end .sic { color: var(--ink-2); }
+  .sysmsg b { color: var(--ink); font-weight: 600; }
+  .sysmsg .st { margin-left: auto; font-size: 12px; }
+  .sysmsg.arrive { animation: arrive .5s ease-out; }
+  .era { display: flex; align-items: center; gap: 10px; margin: 14px 18px 4px; font-size: 12.5px; color: var(--ink-2); letter-spacing: .04em; }
+  .era::before, .era::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  .empty-chan { padding: 40px 24px; color: var(--ink-2); font-style: italic; text-align: center; }
+
+  /* thread panel (open state) */
+  #thread { width: var(--thread-w); flex: none; background: var(--main); border-left: 1px solid var(--rule); display: flex; flex-direction: column; }
+  #thread[hidden] { display: none; }
+  #threadHead { height: 38px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--rule); }
+  #threadHead .t { font-weight: 600; font-size: 16px; flex: 1; }
+  #threadHead button { background: none; border: 0; font-size: 22px; cursor: pointer; color: var(--ink-2); }
+  #threadBody { flex: 1; overflow-y: auto; padding: 8px 0 16px; }
+  .tsep { margin: 6px 18px 4px; font-size: 12.5px; color: var(--ink-2); border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  .rmeta { font-size: 12.5px; color: var(--ink-2); font-style: italic; margin-top: 2px; }
+  .curator .av, .av.cur { background: var(--accent); }
+
+  /* channel pages: bibliography & stats */
+  #chanPage { position: absolute; left: 0; right: 0; top: 48px; bottom: 0; background: var(--main); z-index: 10; display: flex; flex-direction: column; }
+  #chanPage[hidden] { display: none; }
+  .pagebar { display: flex; align-items: center; gap: 14px; padding: 10px 18px; border-bottom: 1px solid var(--rule); }
+  .pagebar button { background: none; border: 0; color: var(--accent); font-size: 15px; cursor: pointer; padding: 0; }
+  .pagebar #pageTitle { font-weight: 600; font-size: 17px; }
+  #pageBody { flex: 1; overflow-y: auto; padding: 14px 24px 40px; }
+  #pageBody h3, #profBody h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); font-weight: 400; margin: 18px 0 6px; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  .bib-author { margin: 14px 0 4px; font-weight: 600; font-size: 16px; }
+  .bib-author .meta { font-weight: 400; color: var(--ink-2); font-size: 13px; margin-left: 6px; }
+  .bib-work { margin: 2px 0 6px 18px; font-size: 15px; line-height: 1.4; text-indent: -18px; padding-left: 18px; }
+  .bib-work .refs { color: var(--ink-2); font-size: 13.5px; }
+  .bib-work a { color: var(--accent); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .tile { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; }
+  .tile .v { font-size: 28px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .tile .l { font-size: 13px; color: var(--ink-2); }
+  .bars { display: flex; align-items: flex-end; gap: 2px; height: 160px; padding-bottom: 2px; border-bottom: 1px solid var(--rule); position: relative; }
+  .bars .b { flex: 1; background: #5a4632; border-radius: 4px 4px 0 0; min-height: 2px; position: relative; cursor: default; }
+  .bars .b.later { background: #c9b88f; }
+  .bars .b:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .bars .b:hover::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap;
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 2px 7px; font-size: 13px; color: var(--ink); z-index: 2; }
+  .baraxis { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--ink-2); margin-top: 3px; }
+  .note { font-size: 13px; color: var(--ink-2); font-style: italic; margin-top: 4px; }
+  table.rank { border-collapse: collapse; width: 100%; max-width: 560px; font-size: 14.5px; }
+  table.rank td { padding: 3px 8px 3px 0; border-bottom: 1px solid rgba(90,70,50,.12); }
+  table.rank td.n { text-align: right; font-variant-numeric: tabular-nums; width: 3em; color: var(--ink-2); }
+  table.rank td.bar { width: 45%; }
+  table.rank td.bar span { display: block; height: 8px; background: #5a4632; border-radius: 0 4px 4px 0; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 28px; }
+
+  /* splitters */
+  .vsplit { width: 6px; flex: none; cursor: col-resize; background: transparent; position: relative; margin: 0 -3px; z-index: 3; }
+  .vsplit:hover, .vsplit.drag { background: rgba(138,47,29,.25); }
+  .hsplit { height: 5px; flex: none; cursor: row-resize; background: var(--rule); }
+  .hsplit:hover, .hsplit.drag { background: rgba(138,47,29,.45); }
+
+  /* globe (bottom left) */
+  #globePane { height: var(--globe-h); flex: none; position: relative; background: var(--top); display: flex; flex-direction: column; }
+  #globePane.popped { height: auto; }
+  .paneBar { user-select: none; -webkit-user-select: none; height: 28px; flex: none; display: flex; align-items: center; padding: 0 6px 0 12px; color: var(--top-ink-2); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; background: #221e1a; }
+  .paneBar span { flex: 1; }
+  .paneBar button { display: grid; place-items: center; line-height: 0; background: none; border: 0; color: var(--top-ink); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+  .paneBar button:hover { background: rgba(239,228,200,.14); }
+  #globeSlot { flex: 1; position: relative; min-height: 0; }
+  #globeHost { position: absolute; inset: 0; overflow: hidden; }
+  #globe { position: absolute; inset: 0; }
+  #poppedNote { display: none; color: var(--top-ink-2); font-size: 13px; padding: 6px 12px; font-style: italic; }
+  #globePane.popped #globeSlot { display: none; }
+  #globeFloat { position: fixed; z-index: 30; left: 80px; top: 120px; width: 560px; height: 520px; background: var(--top); border: 1px solid #000; border-radius: 10px; box-shadow: 0 18px 50px rgba(0,0,0,.55); display: flex; flex-direction: column; overflow: hidden; resize: both; min-width: 260px; min-height: 220px; }
+  #globeFloat[hidden] { display: none; }
+  #globeFloat .paneBar { cursor: move; }
+  #floatSlot { flex: 1; position: relative; }
+
+  /* right column: members (top) + profile (bottom) */
+  #side { width: var(--side-w); flex: none; background: var(--side); display: flex; flex-direction: column; border-left: 1px solid var(--rule); min-width: 220px; }
+  #members { flex: 1; overflow-x: hidden; overflow-y: auto; padding: 4px 8px 12px; min-height: 60px; }
+  .mhead { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); margin: 12px 8px 4px; }
+  .mem { display: grid; grid-template-columns: 34px 1fr; gap: 0 10px; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+  .mem:hover { background: rgba(90,70,50,.09); }
+  .mem.sel { background: rgba(138,47,29,.12); }
+  .mem.dead { opacity: .6; }
+  .mem .av { width: 34px; height: 34px; font-size: 12.5px; }
+  .mem .nm { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; display: flex; align-items: center; gap: 5px; }
+  .mem .tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+  .mem .typ { display: none; }
+  .mem.typing .typ { display: inline-flex; }
+  .mem.typing { opacity: 1; }
+  .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; padding: 0 6px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--rule); color: var(--ink-2); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; }
+  .pill i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  /* speaker profile: a floating card anchored at the member's row, spreading over the channel */
+  #prof { position: fixed; z-index: 28; width: min(600px, calc(100vw - var(--side-w) - 60px)); height: min(740px, calc(100vh - 140px));   /* same height on every tab */ display: flex; flex-direction: column;
+    box-shadow: 0 18px 50px rgba(40,25,10,.35); border-radius: 12px; }
+  #prof[hidden] { display: none; }
+  #profHead { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 16px; border-bottom: 1px solid var(--rule); font-size: 13.5px; color: var(--ink-2); }
+  #profHead { justify-content: flex-end; }
+  #profHead button { background: none; border: 0; font-size: 18px; color: var(--ink-2); cursor: pointer; border-radius: 6px; padding: 0 8px; }
+  #profHead button:hover { background: var(--panel-2); color: var(--ink); }
+  #profBody { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 18px 18px; }
+  .launch { position: absolute; right: 4px; top: 4px; width: 24px; height: 24px; border-radius: 6px; background: rgba(27,23,19,.7); color: #f4ead2; display: none; place-items: center; text-decoration: none; font-size: 14px; }
+  .prof-pic { position: relative; }
+  .prof-pic:hover .launch, .launch:focus { display: grid; }
+  .ulist { display: flex; flex-direction: column; gap: 2px; max-height: 200px; overflow-y: auto; border: 1px solid var(--rule); border-radius: 8px; padding: 4px; background: var(--main); }
+  .uopt { display: grid; grid-template-columns: 1fr auto 26px; gap: 8px; align-items: baseline; text-align: left; font: 15px "EB Garamond", Georgia, serif; background: none; border: 0; border-radius: 6px; padding: 4px 8px; cursor: pointer; color: var(--ink); }
+  .uopt:hover { background: rgba(90,70,50,.08); }
+  .uopt.on { background: var(--ink); color: var(--panel); }
+  .uopt.on .d { color: var(--top-ink-2); }
+  .uopt .q { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ugo { width: 26px; height: 22px; border: 0; border-radius: 5px; background: none; color: var(--ink-2); cursor: pointer; display: grid; place-items: center; align-self: center; padding: 0; }
+  .ugo svg { width: 15px; height: 15px; }
+  .ugo:hover { background: rgba(90,70,50,.15); color: var(--ink); }
+  .uopt.on .ugo { color: var(--top-ink-2); } .uopt.on .ugo:hover { background: rgba(255,255,255,.15); color: var(--panel); }
+  .uopt .d { font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+  .uopt.later { opacity: .5; }
+  .udetail { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 10px; background: #fbf5e6; }
+  .udetail .uq { font-size: 18px; line-height: 1.4; }
+  /* Quotes: the original always first, the English below it, each as a block quote. */
+  .udetail blockquote { margin: 0 0 8px; padding: 6px 0 6px 14px; border-left: 3px solid var(--rule); font-size: 18px; line-height: 1.4; }
+  .udetail blockquote.orig { color: var(--ink); }
+  .udetail blockquote.en { font-size: 16.5px; color: var(--ink-2); border-left-style: dotted; }
+  .udetail .ut { font-size: 13px; color: var(--ink-2); }
+  .udetail dl { display: grid; grid-template-columns: max-content 1fr; gap: 3px 12px; margin: 10px 0 0; font-size: 14.5px; }
+  .udetail dt { color: var(--ink-2); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding-top: 2px; }
+  .udetail dd { margin: 0; }
+  .udetail dd a { color: var(--accent); }
+  .ufacts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 0 22px; margin-top: 10px; align-items: start; }
+  .ufacts dl { margin-top: 0; }
+  .flabel { display: block; color: var(--ink-2); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding-top: 2px; margin-bottom: 4px; }
+  .flabel .edited, .flabel .saved { text-transform: none; letter-spacing: 0; font-size: 12.5px; font-style: italic; }
+  .ctxedit { width: 100%; min-height: 150px; resize: vertical; font: 15px/1.4 "EB Garamond", Georgia, serif; color: var(--ink); background: #fffdf6; border: 1px solid var(--rule); border-radius: 6px; padding: 7px 9px; }
+  .ctxedit:focus { outline: none; border-color: var(--ink-2); box-shadow: 0 0 0 3px rgba(138,47,29,.12); }
+  .ctxread { font-size: 15px; line-height: 1.4; }
+  .fhint { font-size: 12px; color: var(--ink-2); margin-top: 4px; font-style: italic; }
+  @container (max-width: 480px) { .ufacts { grid-template-columns: 1fr; } }
+  #prof { container-type: inline-size; }
+  .udetail .ctx { margin-top: 10px; font-size: 15px; }
+  .udetail .links { margin-top: 8px; }
+  /* Read aloud: a circular speaker button to the right of the original. */
+  .udetail .qrow { display: flex; align-items: flex-start; gap: 10px; }
+  .udetail .qrow blockquote { flex: 1; min-width: 0; }
+  .udetail .speak { flex: none; width: 34px; height: 34px; margin-top: 6px; padding: 0; border: 0; border-radius: 50%;
+    display: grid; place-items: center; background: #7a5a3a; color: #f4ead2; box-shadow: 0 1px 3px rgba(60,40,20,.35); cursor: pointer; }
+  .udetail .speak svg { width: 18px; height: 18px; }
+  .udetail .speak:hover:not([aria-disabled="true"]) { background: #8a4a2a; }
+  /* Not available yet: looks off, but still shows its tooltip (a truly disabled button wouldn't). */
+  .udetail .speak[aria-disabled="true"] { background: #b9a88c; color: #f4ead2; box-shadow: none; opacity: .6; cursor: not-allowed; }
+  .ushow { margin-top: 10px; font: 14px "EB Garamond", Georgia, serif; background: none; border: 1px solid var(--rule); border-radius: 6px; padding: 3px 10px; cursor: pointer; color: var(--ink); }
+  .ushow:hover { background: var(--panel-2); }
+  .prof-id { flex: 1; min-width: 0; }
+  .prof-facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0 0; font-size: 18px; line-height: 1.3; }
+  .prof-facts dt { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); padding-top: 5px; }
+  .prof-facts dd { margin: 0; }
+  .prof-facts .meta { font-size: 15px; }
+  .ptabs { display: flex; gap: 4px; margin: 16px 0 10px; border-bottom: 1px solid var(--rule); }
+  .ptabs button { font: 16px "EB Garamond", Georgia, serif; background: none; border: 0; border-bottom: 3px solid transparent; padding: 6px 12px 5px; margin-bottom: -1px; cursor: pointer; color: var(--ink-2); }
+  .ptabs button:hover { color: var(--ink); }
+  .ptabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+  .ptabs .c { font-size: 12.5px; font-weight: 400; color: var(--ink-2); margin-left: 3px; }
+  ol.life { list-style: none; margin: 4px 0 0; padding: 0; position: relative; }
+  ol.life::before { content: ""; position: absolute; left: 131px; top: 6px; bottom: 6px; width: 2px; background: var(--rule); }
+  ol.life li { display: grid; grid-template-columns: 120px 24px 1fr; align-items: start; padding: 5px 0; }
+  ol.life .when { font-size: 13.5px; color: var(--ink-2); text-align: right; padding-right: 4px; padding-top: 2px; }
+  ol.life .dot { width: 12px; height: 12px; border-radius: 50%; margin: 5px 0 0 6px; background: var(--main); border: 2px solid var(--ink-2); position: relative; z-index: 1; }
+  ol.life li.faith .dot { border-color: var(--accent); background: var(--accent); }
+  ol.life .what { font-size: 16px; line-height: 1.35; }
+  ol.life .k { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+  ol.life li.faith .k { color: var(--accent); }
+  .dagger { font-weight: 400; color: var(--ink-2); font-size: 14px; }
+  .prof-head { display: flex; gap: 12px; align-items: flex-start; }
+  .prof-pic { margin: 0; width: 96px; flex: none; }
+  .prof-pic img { width: 96px; height: 120px; object-fit: cover; object-position: center 20%; border-radius: 6px; border: 1px solid var(--rule); filter: sepia(.2); display: block; }
+  .prof-pic .av { width: 84px; height: 84px; font-size: 30px; }
+  .prof-name { font-size: 26px; font-weight: 400; margin: 0; line-height: 1.15; }
+  #profBody .meta { color: var(--ink-2); font-size: 13px; }
+  #profBody .tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+  ul.plain { margin: 0; padding-left: 16px; font-size: 14px; line-height: 1.5; }
+  .now { margin-top: 10px; padding: 8px 10px; background: var(--main); border: 1px solid var(--rule); border-radius: 8px; }
+  .now .k { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+  .pu { padding: 7px 8px; margin: 0 -8px; border-radius: 6px; cursor: pointer; border-bottom: 1px solid rgba(90,70,50,.1); }
+  .pu:hover { background: rgba(90,70,50,.06); }
+  .pu-q { font-size: 15.5px; line-height: 1.35; }
+  .pu-q .orig.foreign { font-style: italic; font-size: 14px; color: var(--ink-2); }
+  .pu-meta { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+  .pu-ctx { font-size: 13.5px; margin-top: 3px; }
+  .pu-ctx a { color: var(--accent); }
+  .pu-th { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; padding-left: 8px; border-left: 2px solid var(--rule); }
+  .pu.later { opacity: .45; }
+
+  /* globe dots */
+  .gwrap { width: 0; height: 0; pointer-events: none; }
+  .gdot { position: absolute; border-radius: 50%; background: var(--dot); border: 1.5px solid rgba(239,228,200,.9); transform: translate(-50%, -50%); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: #f4ead2; font: 600 11px/1 "EB Garamond", Georgia, serif; pointer-events: auto; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+  .gdot.dim { opacity: .25; }
+  .gdot.hl { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .gdot.pop { animation: pop .6s ease-out; }
+  @keyframes pop { 0% { transform: translate(-50%,-50%) scale(0); } 60% { transform: translate(-50%,-50%) scale(1.5); } 100% { transform: translate(-50%,-50%) scale(1); } }
+
+  /* popovers */
+  .panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 8px 28px rgba(0,0,0,.3); }
+  #mini { position: fixed; z-index: 40; width: 260px; padding: 10px 12px; display: none; pointer-events: none; font-size: 13.5px; }
+  #mini .mh { display: flex; gap: 10px; align-items: center; }
+  #mini .av { width: 42px; height: 42px; font-size: 15px; }
+  #mini .nm { font-weight: 600; font-size: 16px; line-height: 1.15; }
+  #mini .meta { color: var(--ink-2); font-size: 12.5px; }
+  #mini .tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  #mini .src { margin-top: 6px; font-size: 13px; }
+  #mini .hint { margin-top: 6px; font-size: 11.5px; color: var(--ink-2); font-style: italic; }
+  #civcard { position: fixed; z-index: 35; width: 280px; padding: 10px 12px; display: none; font-size: 14px; }
+  #civcard h3 { margin: 0; font-size: 17px; }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 6px; border-radius: 10px; background: var(--panel-2); margin: 2px 4px 2px 0; }
+  .tip { background: var(--panel); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 4px 8px; font-family: "EB Garamond", Georgia, serif; font-size: 14px; max-width: 280px; }
+  #meMenu { position: fixed; right: 12px; top: 54px; z-index: 45; width: 250px; padding: 6px; display: flex; flex-direction: column; }
+  #meMenu[hidden] { display: none; }
+  .mm-head { display: flex; gap: 10px; align-items: center; padding: 6px 8px 10px; border-bottom: 1px solid var(--rule); margin-bottom: 4px; }
+  .mm-head .meav { width: 38px; height: 38px; border-radius: 50%; background: #6b5a44; color: var(--panel); display: grid; place-items: center; font-weight: 600; font-size: 12px; }
+  .mm-name { font-weight: 600; font-size: 16px; }
+  #meMenu button { text-align: left; background: none; border: 0; font: 15px "EB Garamond", Georgia, serif; padding: 7px 10px; border-radius: 5px; cursor: pointer; color: var(--ink); }
+  #meMenu button:hover { background: var(--panel-2); }
+  #settingsDlg { position: fixed; inset: 0; z-index: 55; background: rgba(20,16,12,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  #settingsDlg[hidden] { display: none; }
+  .dlg { width: min(760px, 100%); height: min(620px, calc(100vh - 32px)); display: flex; flex-direction: column; overflow: hidden; }
+  .dlg header { display: flex; align-items: center; padding: 12px 14px 12px 22px; border-bottom: 1px solid var(--rule); }
+  .dlg header h2 { margin: 0; font-size: 22px; font-weight: 400; flex: 1; }
+  .dlg header button { background: none; border: 0; font-size: 24px; color: var(--ink-2); cursor: pointer; border-radius: 6px; padding: 0 8px; }
+  .dlg header button:hover { background: var(--panel-2); }
+  .dlg-main { flex: 1; display: flex; min-height: 0; }
+  .dlg-tabs { width: 170px; flex: none; padding: 12px 8px; border-right: 1px solid var(--rule); display: flex; flex-direction: column; gap: 2px; background: var(--chan); }
+  .dlg-tabs button { text-align: left; font: 15.5px "EB Garamond", Georgia, serif; background: none; border: 0; border-radius: 6px; padding: 7px 12px; cursor: pointer; color: var(--ink-2); }
+  .dlg-tabs button:hover { background: rgba(90,70,50,.08); color: var(--ink); }
+  .dlg-tabs button[aria-selected="true"] { background: rgba(90,70,50,.16); color: var(--ink); font-weight: 600; }
+  .dlg-body { flex: 1; overflow-y: auto; padding: 8px 24px 24px; }
+  .dlg-body h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); font-weight: 400; margin: 16px 0 6px; border-bottom: 1px solid var(--rule); padding-bottom: 4px; display: flex; justify-content: space-between; }
+  .dlg-body h3 .act button { font: 12.5px "EB Garamond", Georgia, serif; text-transform: none; letter-spacing: 0; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0 0 0 8px; }
+  .dlg-body p { font-size: 15px; margin: 4px 0 10px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0 16px; }
+  table.langs { width: 100%; border-collapse: collapse; font-size: 15px; }
+  table.langs td { padding: 6px 4px; border-bottom: 1px solid rgba(90,70,50,.12); vertical-align: middle; }
+  table.langs td.n { color: var(--ink-2); font-size: 13px; text-align: right; width: 5em; padding-right: 14px; }
+  table.langs tr.all td { font-weight: 600; border-bottom: 2px solid var(--rule); }
+  table.langs .sample { display: block; font-size: 12.5px; color: var(--ink-2); font-style: italic; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; }
+  .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--main); }
+  .seg button { font: 14px "EB Garamond", Georgia, serif; border: 0; background: none; padding: 4px 12px; cursor: pointer; color: var(--ink-2); }
+  .seg button + button { border-left: 1px solid var(--rule); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+  .seg.mixed button { opacity: .75; }
+  .ghostbtn { font: 15px "EB Garamond", Georgia, serif; background: var(--main); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 12px; cursor: pointer; color: var(--ink); }
+  .ghostbtn:hover { background: var(--panel-2); }
+  .dlg-body code { font-size: 13px; background: var(--main); padding: 1px 5px; border-radius: 4px; }
+  button.danger { font: 15px "EB Garamond", Georgia, serif; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 6px 16px; cursor: pointer; }
+  label.row { display: flex; align-items: center; gap: 6px; font-size: 14px; line-height: 1.5; cursor: pointer; }
+  label.row .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; border: 1px solid rgba(0,0,0,.25); }
+  label.row.inactive { opacity: .45; }
+  select, input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
+  select { font: inherit; background: var(--panel-2); border: 1px solid var(--rule); color: var(--ink); border-radius: 4px; padding: 1px 4px; }
+  .sub { font-style: italic; color: var(--ink-2); font-size: 13px; }
+  .linkbtn { font: inherit; font-size: 14px; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; }
+  #welcome { position: fixed; inset: 0; z-index: 60; background: rgba(20,16,12,.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  #welcome[hidden] { display: none; }
+  .wcard { max-width: 500px; padding: 22px 26px 20px; font-size: 16px; line-height: 1.45; }
+  .wcard h1 { font-size: 28px; font-weight: 400; margin: 0; }
+  .wcard ul { padding-left: 18px; margin: 8px 0; }
+  #welcome .wfoot { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 12px; }
+  #wgo { font: inherit; font-size: 16px; background: var(--ink); color: var(--panel); border: 0; border-radius: 6px; padding: 7px 26px; cursor: pointer; }
+  #welcome .wskip { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink-2); cursor: pointer; }
+
+  #worldBtn, #worldClose { display: none; }
+  #globeCanvas { touch-action: none; }
+  @media (max-width: 900px) {
+    #worldBtn { display: grid; place-items: center; flex: none; width: 40px; height: 40px; padding: 0; background: none; border: 0; color: inherit; cursor: pointer; }
+    #popBtn { display: none; }
+    #chanHead { padding-right: 60px; }
+    body.world #left { display: flex; position: absolute; inset: 0 0 46px 0; z-index: 25; width: auto; min-width: 0; }
+    body.world #server, body.world #chanList, body.world #hsplitL { display: none; }
+    body.world #globePane { flex: 1; height: auto; }
+    body.world #worldClose { display: grid; width: 36px; height: 28px; }
+    body.world #globePane .paneBar { padding-right: 64px; }   /* keep the close button clear of the avatar */
+    #topbar { gap: 8px; padding: 0 8px; } #topbar h1 { display: none; }
+    #transport button:not(#play):not(#prev):not(#next) { display: none; }
+    #bottombar #clock { padding: 0 10px; } #bottombar .cksub { display: none; } .d7 { font-size: 16px; } .m14 { font-size: 11px; }
+    #me .mename { display: none; }
+    #left, #side, .vsplit { display: none; }
+    #chanSelect { display: block; }
+    #chanHead .name, #chanHead .hash, #chanHead .topic { display: none; }
+    #thread { position: absolute; inset: 0; width: auto; z-index: 20; }
+  }
+  @media (max-width: 600px) {
+    .wcard { width: 100%; box-sizing: border-box; max-height: calc(100dvh - 32px); overflow-y: auto; padding: 18px 18px 16px; }
+    .wcard h1 { font-size: 24px; }
+    #ticks { display: none; }
+    #scrub { min-width: 60px; }
+    #bottombar { gap: 8px; padding-left: 6px; }
+    #bottombar #clock { padding: 0 8px; }
+    .lcd { gap: 5px !important; } .d7 { font-size: 13px; } .m14 { font-size: 9px; }
+    #transport button { min-width: 36px; min-height: 36px; }
+    #chanMenuBtn { min-width: 36px; min-height: 36px; }
+    #welcome .wskip input { width: 20px; height: 20px; }
+  }
+</style>
+</head>
+<body>
+<button id="me" aria-label="You: settings" aria-haspopup="dialog" title="You · settings"><span class="meav">You</span><span class="mename">Guest listener</span><span class="caret">▾</span></button>
+
+<div id="app">
+  <nav id="left" aria-label="Channels">
+    <div id="server">The Great Conversation</div>
+    <div id="chanList"></div>
+    <div class="hsplit" id="hsplitL" title="Drag to resize the globe"></div>
+    <div id="globePane">
+      <div class="paneBar"><span>The World</span><button id="worldClose" aria-label="Back to the conversation" title="Back to the conversation">✕</button><button id="popBtn" title="Open the globe in its own window" aria-label="Open the globe in its own window"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5h4.5V7M13.5 2.5 7.5 8.5M11.5 9.5v3.5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V5a.5.5 0 0 1 .5-.5h3.5"/></svg></button></div>
+      <div id="poppedNote">The globe is in its own window. <button class="linkbtn" id="dockBtn2">Bring it back</button></div>
+      <div id="globeSlot"><div id="globeHost"><div id="globe"><canvas id="globeCanvas"></canvas></div></div></div>
+    </div>
+  </nav>
+  <div class="vsplit" id="vsplitL" title="Drag to resize"></div>
+
+  <main id="main">
+    <div id="chanHead"><span class="hash">#</span><span class="name" id="chanName"></span><span class="topic" id="chanTopic"></span>
+      <select id="chanSelect" aria-label="Channel"></select><span class="count" id="count"></span>
+      <button id="worldBtn" aria-label="Show the globe" title="The World"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg></button>
+      <button id="chanMenuBtn" aria-label="Channel menu" aria-haspopup="menu" title="More">⋯</button>
+      <div id="chanMenu" class="panel" role="menu" hidden>
+        <button role="menuitem" data-act="bib">📚 Bibliography</button>
+        <button role="menuitem" data-act="stats">📊 Channel stats</button>
+        <button role="menuitem" data-act="json">⬇ Download channel data (JSON)</button>
+      </div></div>
+    <div id="chanPage" hidden><div class="pagebar"><button id="pageBack">← Back to #<span id="pageChan"></span></button><span id="pageTitle"></span></div><div id="pageBody"></div></div>
+    <div id="centerRow">
+      <div id="feedCol">
+        <div id="feed" role="log"></div>
+        <div id="typing" aria-live="polite"></div>
+        <div id="composer"></div>
+      </div>
+      <aside id="thread" hidden aria-label="Thread">
+        <div id="threadHead"><span class="t">Thread</span><button id="threadClose" aria-label="Close thread">×</button></div>
+        <div id="threadBody"></div>
+        <div id="threadComposer"></div>
+      </aside>
+    </div>
+  </main>
+
+  <div class="vsplit" id="vsplitR" title="Drag to resize"></div>
+  <aside id="side">
+    <div id="members" aria-label="Members"></div>
+</aside>
+</div>
+
+<footer id="bottombar">
+  <div id="clock" aria-live="off" title="The date in the conversation">
+      <div class="lcd"><span class="cell d7 date"><i class="g">8888!88!88</i><b id="ckDate"></b></span><span class="cell m14"><i class="g">~~</i><b id="ckEra"></b></span><span class="cell d7"><i class="g">88:88</i><b><span id="ckH"></span><span class="colon">:</span><span id="ckM"></span></b></span></div>
+    </div>
+  <div id="transport" role="group" aria-label="Playback">
+    <button id="toStart" title="To the beginning"><svg viewBox="0 0 16 16"><path d="M2 2h2v12H2zM14 2v12L5 8z"/></svg></button>
+    <button id="prev" title="Previous message (←)"><svg viewBox="0 0 16 16"><path d="M8 2v12L1 8zM15 2v12L8 8z"/></svg></button>
+    <button id="play" title="Play / pause (space)"><svg id="playIcon" viewBox="0 0 16 16"><path d="M4 2v12l10-6z"/></svg></button>
+    <button id="stop" title="Stop and rewind"><svg viewBox="0 0 16 16"><path d="M3 3h10v10H3z"/></svg></button>
+    <button id="next" title="Next message (→)"><svg viewBox="0 0 16 16"><path d="M1 2v12l7-6zM8 2v12l7-6z"/></svg></button>
+    <button id="toEnd" title="To the present"><svg viewBox="0 0 16 16"><path d="M2 2v12l9-6zM12 2h2v12h-2z"/></svg></button>
+  </div>
+  <div id="scrub"><input type="range" id="slider" aria-label="Date in the conversation"><div id="ticks"></div></div>
+</footer>
+
+<div id="globeFloat" hidden>
+  <div class="paneBar" id="floatBar"><span>The World</span><button id="dockBtn" title="Dock the globe">⧈</button></div>
+  <div id="floatSlot"></div>
+</div>
+
+<div id="meMenu" class="panel" hidden role="menu" aria-label="You">
+  <div class="mm-head"><span class="meav">You</span><div><div class="mm-name">Guest listener</div><div class="sub" id="mmSub">Not signed in</div></div></div>
+  <button role="menuitem" id="signIn">Sign in</button>
+  <button role="menuitem" id="setName" hidden>Set display name…</button>
+  <button role="menuitem" id="signOut" hidden>Sign out</button>
+  <button role="menuitem" id="openSettings">⚙ Settings…</button>
+  <button role="menuitem" id="openWelcome">❔ How this works</button>
+</div>
+
+<div id="settingsDlg" hidden>
+  <div class="dlg panel" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <header><h2 id="setTitle">Settings</h2><button id="setClose" aria-label="Close settings">×</button></header>
+    <div class="dlg-main">
+      <nav class="dlg-tabs" role="tablist">
+        <button role="tab" data-tab="utt" aria-selected="true">Utterances</button>
+        <button role="tab" data-tab="globe">Globe</button>
+        <button role="tab" data-tab="time">Timeline</button>
+        <button role="tab" data-tab="cur">Curator</button>
+        <button role="tab" data-tab="reset">Reset</button>
+      </nav>
+      <div class="dlg-body">
+        <section data-pane="utt">
+          <h3>Language of each utterance</h3>
+          <p class="sub">For each language, show the English translation, the original words, or both. The other form is always one click away in the speaker's profile.</p>
+          <table class="langs" id="langTable"></table>
+        </section>
+        <section data-pane="globe" hidden>
+          <h3>Civilizations <span class="act"><button data-all="civ">all</button><button data-none="civ">none</button></span></h3>
+          <label class="row"><input type="checkbox" id="civClip"> show only utterances inside shaded areas</label>
+          <div id="civList" class="grid2"></div>
+          <h3>Religions <span class="act"><button data-all="rel">all</button><button data-none="rel">none</button></span></h3>
+          <p class="sub">Dims other speakers; shades civilizations by their share of believers.</p>
+          <div id="relList" class="grid2"></div>
+        </section>
+        <section data-pane="time" hidden>
+          <h3>What the channel shows</h3>
+          <label class="row"><select id="windowSel">
+            <option value="0">Everything said so far</option><option value="50">Only the last 50 years</option>
+            <option value="150">Only the last 150 years</option><option value="400">Only the last 400 years</option>
+          </select></label>
+        </section>
+        <section data-pane="cur" hidden>
+          <h3>Your replies</h3>
+          <p id="curStatus"></p>
+          <p class="sub">In a thread, hover one of the curator's replies and choose ✎ Edit (Ctrl+Enter saves, Esc cancels). Contexts are edited in a speaker's profile and save as you type. Edits are saved for everyone.</p>
+          <p id="curEditCount"></p>
+          <p><button id="curExport" class="ghostbtn">⬇ Download my edits (JSON)</button></p>
+        </section>
+        <section data-pane="reset" hidden>
+          <h3>Start over</h3>
+          <p>Clears your place in the conversation, the layout and these settings. Your own messages are kept.</p>
+          <button id="resetView" class="danger">Reset everything</button>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="welcome" hidden>
+  <div class="wcard panel" role="dialog" aria-modal="true" aria-labelledby="wtitle">
+    <h1 id="wtitle">The Great Conversation</h1>
+    <p>Human ideas have evolved over time and by reacting to one another.</p>
+    <ul>
+      <li><b>The Great Conversation</b> is meant to help explore this process</li>
+      <li><b>Time</b> is set with the slider along the bottom.</li>
+      <li><b>Members</b> represent humans or books (written by humans) who have contributed.</li>
+      <li><b>Utterances</b> represent an encapsulated idea or contribution</li>
+    </ul>
+    <div class="wfoot"><button id="wgo">Begin</button>
+      <label class="wskip"><input type="checkbox" id="wskip"> Don't show this message again</label></div>
+  </div>
+</div>
+
+<div id="civcard" class="panel"></div>
+<section id="prof" class="panel" hidden aria-label="Speaker profile">
+  <div id="profHead"><button id="profClose" title="Collapse (Esc)" aria-label="Collapse the profile">▸</button></div>
+  <div id="profBody"></div>
+</section>
+<div id="mini" class="panel" role="tooltip"></div>
+<script type="module">
+import { boot, isGlobeWindow } from "./globe.js";
+import { account } from "./account.js";
+const { D, globe } = await boot("#globeCanvas");
+if (isGlobeWindow) {
+  document.title = "The World · The Great Conversation";
+  document.body.classList.add("globe-window");
+  document.body.appendChild(document.getElementById("globeHost"));
+  await new Promise(() => {});   // the opener drives this globe; nothing else runs here
+}
+await account.load();
+const T0 = -1000, T1 = 2026 + 10 / 12;   // the conversation runs to Nov 2026
+const RELCOL = D.colors.religion;
+const CIVCOL = ["#a0522d","#4f7a3a","#6a4c93","#b5651d","#2f6690","#9a7b1c","#8e3b5a","#2e7d6b"];
+const $ = id => document.getElementById(id);
+const fmtYear = y => y < 1 ? `${1 - y} BC` : `AD ${y}`;
+const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+const fmtSpan = (a, b) => a === b ? fmtYear(a) : `${fmtYear(a)} – ${fmtYear(b)}`;
+const yearOf = t => { const m = /^(-?\d{1,4})/.exec(t || ""); return m ? +m[1] : null; };
+const spanOf = s => { if (!s) return [null, null]; const [a, b] = s.split("/"); const y0 = yearOf(a); const y1 = b === undefined ? y0 : (b === ".." ? null : yearOf(b)); return [y0, y1]; };
+const edtf = s => { if (!s) return ""; const [a, b] = s.split("/"); const ya = yearOf(a), yb = b === ".." ? null : yearOf(b);
+  return (a.includes("~") ? "c. " : "") + (ya === null ? "?" : fmtYear(ya)) + (b ? " – " + (yb === null ? "…" : fmtYear(yb)) : ""); };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const gloss = s => esc(s).replace(/\[([^\]]{1,40})\]/g, '<span class="gl"> [$1]</span>');
+const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; };
+const slug = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const initials = name => name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(w => /^\p{Lu}/u.test(w)).slice(0, 2).map(w => w[0]).join("") || name[0];
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } };
+
+// ---------- avatars ----------
+const TORAH = `<svg viewBox="0 0 40 40" width="70%" height="70%" aria-hidden="true"><g fill="none" stroke="#f4ead2" stroke-width="2" stroke-linecap="round">
+  <rect x="7" y="9" width="6" height="22" rx="3"/><rect x="27" y="9" width="6" height="22" rx="3"/><path d="M13 12h14M13 28h14"/>
+  <path d="M10 9V5M10 31v4M30 9V5M30 31v4"/><path d="M16 17h8M16 20.5h8M16 24h6" stroke-width="1.3"/></g></svg>`;
+const SYMBOL = { "hebrew-bible": TORAH, "new-testament": "☧", "mahabharata": "ॐ", "latin-proverb": "Lat.", "beowulf-poet": "ᛒ", "star-trek": "✦", "annie-hall": "🎬" };
+const COLLECTIVE = new Set(Object.keys(SYMBOL));
+const CURATOR = (D.curator || "Curator").replace(/^@/, "");
+const avInner = aid => SYMBOL[aid] || esc(initials(D.authors[aid]?.name || aid));
+function avStyle(aid, rel) {
+  const p = D.authors[aid]?.portrait, bg = RELCOL[rel] || "#7a6a52";
+  return `background-color:${bg}${p ? `;background-image:url('${p.thumb}');background-size:cover;background-position:center 20%;color:transparent` : ""}`;
+}
+// A character speaking inside a text gets their own name and avatar; the text stays the "member".
+const SPEAKER_SYMBOL = { "The Serpent": "🐍" };
+const speakerName = n => n.speaker ? n.speaker.name + (n.speaker.aka ? ` (${n.speaker.aka})` : "") : n.authorName;
+const speakerAv = (n, cls = "") => n.speaker
+  ? `<div class="av ${cls}" data-author="${esc(n.author)}" title="${esc(n.speaker.note || "")}" style="background:#5d4a2f;font-size:22px">${SPEAKER_SYMBOL[n.speaker.name] || esc(initials(n.speaker.name))}</div>`
+  : avHTML(n.author, n.religion, cls);
+const avHTML = (aid, rel, cls = "") => `<div class="av ${cls}" data-author="${esc(aid)}" style="${avStyle(aid, rel)}">${avInner(aid)}</div>`;
+
+
+// ---------- geometry ----------
+function inRing(lon, lat, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+const polysOf = coords => (typeof coords[0][0][0] === "number") ? [coords] : coords;
+const inPoly = (n, coords) => polysOf(coords).some(p => inRing(n.lon, n.lat, p[0]) && !p.slice(1).some(h => inRing(n.lon, n.lat, h)));
+const RAD = Math.PI / 180, RAD_ = RAD;
+const angDist = (a, b) => { const s = Math.sin((b.lat - a.lat) * RAD / 2) ** 2 + Math.cos(a.lat * RAD) * Math.cos(b.lat * RAD) * Math.sin((b.lon - a.lon) * RAD / 2) ** 2; return 2 * Math.asin(Math.min(1, Math.sqrt(s))) / RAD; };
+
+// ---------- civilizations / religions ----------
+const civKeys = [...new Set(D.civs.map(c => c.civ))];
+const civName = k => { const cs = D.civs.filter(c => c.civ === k); return cs[cs.length - 1].name.replace(/\s*\(.*\)$/, ""); };
+const civColor = k => D.civs.find(c => c.civ === k)?.color || "#9c8f78";
+const relKeys = [...new Set([...D.nodes.map(n => n.religion).filter(Boolean), ...D.civs.flatMap(c => c.religions.map(r => r.family))])].sort();
+const civAt = (pt, y) => D.civs.find(c => c.t0 <= y && y <= c.t1 && inPoly(pt, c.core)) || D.civs.find(c => c.t0 <= y && y <= c.t1 && c.halo && inPoly(pt, c.halo));
+
+// ---------- people (members) ----------
+const authorsInData = [...new Set(D.nodes.filter(n => n.kind === "entry").map(n => n.author))];
+function lifeOf(aid) {
+  const a = D.authors[aid] || {}; let [b, d] = spanOf(a.life);
+  if (b === null) { const ts = D.nodes.filter(n => n.author === aid).map(n => n.t); b = Math.min(...ts) - 30; d = d ?? Math.max(...ts); }
+  return [b, d];
+}
+function placeAt(aid, y) {
+  const ps = (D.authors[aid]?.places || []).filter(p => p.lat != null);
+  if (!ps.length) { const n = D.nodes.find(n => n.author === aid); return n ? { lat: n.lat, lon: n.lon, name: n.placeName } : null; }
+  let best = ps[0];
+  for (const p of ps) { const [s, e] = spanOf(p.when); if (s !== null && s <= y) best = p; if (s !== null && s <= y && y <= (e ?? s)) { best = p; break; } }
+  return best;
+}
+function religionAt(aid, y) {
+  const rs = D.authors[aid]?.religion || []; let hit = null;
+  for (const r of rs) { const [s, e] = spanOf(r.when); if (s === null) continue; if (s <= y && y <= (e ?? s)) return r; if (s <= y) hit = r; }
+  return hit || rs[0] || null;
+}
+
+// ---------- feature flags ----------
+// Channels that follow one civilization or one religion are not ready yet; flip to true to bring them back.
+const FEATURES = {
+  civChannels: false,   // "Civilizations" group in the channel list
+  relChannels: false,   // "Religions" group in the channel list
+};
+const channelKindOn = k => k === "all" || (k === "civ" && FEATURES.civChannels) || (k === "rel" && FEATURES.relChannels);
+
+// ---------- channels ----------
+const CHANNELS = [{ id: "all", kind: "all", name: "language-meaning-world", label: "Language, Meaning, and The World",
+  topic: "Language, meaning, and the world: every utterance in the thread." }];
+for (const k of civKeys) CHANNELS.push({ id: "civ:" + k, kind: "civ", key: k, name: slug(civName(k)), label: civName(k), color: civColor(k),
+  topic: `Utterances made inside ${civName(k)} while it stood (${fmtSpan(Math.min(...D.civs.filter(c => c.civ === k).map(c => c.t0)), Math.max(...D.civs.filter(c => c.civ === k).map(c => c.t1)))}).` });
+for (const r of relKeys) CHANNELS.push({ id: "rel:" + r, kind: "rel", key: r, name: slug(r), label: r, color: RELCOL[r] || "#9c8f78",
+  topic: `Speakers who were ${r === "Unknown" ? "of unknown religion" : r} when they spoke.` });
+const chanById = Object.fromEntries(CHANNELS.map(c => [c.id, c]));
+const inChannel = (n, ch) => ch.kind === "all" ||
+  (ch.kind === "civ" && nodeCivs[n.id].has(ch.key)) || (ch.kind === "rel" && n.kind === "entry" && n.religion === ch.key);
+
+
+
+// ---------- play order ----------
+// Every utterance gets a unique play time (ties nudged apart) so playback can deliver
+// them one at a time; Curator's reply to an utterance arrives right after it.
+const STEP = 0.004, CUR_DT = 0.002;
+{ let prev = -Infinity;
+  for (const n of [...D.nodes].sort((a, b) => a.t - b.t || (a.id < b.id ? -1 : 1))) { n.t = Math.max(n.t, prev + STEP); prev = n.t; } }
+const byId = Object.fromEntries(D.nodes.map(n => [n.id, n]));
+const nodeForRef = ref => D.nodes.find(m => m.workId === ref || m.id === ref);
+const labelOf = (ref, fallback) => { const n = nodeForRef(ref); return n ? n.authorName : fallback; };
+const nodeCivs = {};
+for (const n of D.nodes) nodeCivs[n.id] = new Set(D.civs.filter(c => c.t0 <= n.t && n.t <= c.t1 && (inPoly(n, c.core) || (c.halo && inPoly(n, c.halo)))).map(c => c.civ));
+
+// ---------- system lines: "joined the conversation" / "has finished speaking" ----------
+// Joined = the start of their life (or of the work's composition); finished = its end.
+// Kept just before their first utterance and just after their last, so the order always reads right.
+const SYS = [];
+for (const aid of authorsInData) {
+  const said = D.nodes.filter(n => n.author === aid).sort((a, b) => a.t - b.t);
+  const [b, d] = lifeOf(aid), name = D.authors[aid]?.name || aid;
+  SYS.push({ id: "sys:join:" + aid, kind: "sys", sys: "join", author: aid, name, t: Math.min(b ?? said[0].t, said[0].t - STEP / 2) });
+  if (d !== null && d <= T1) SYS.push({ id: "sys:end:" + aid, kind: "sys", sys: "end", author: aid, name, t: Math.max(d, said[said.length - 1].t + STEP / 2) });
+}
+for (const e of SYS) byId[e.id] = e;
+const sysInChannel = (e, ch) => ch.kind === "all" || D.nodes.some(n => n.author === e.author && inChannel(n, ch));
+
+// ---------- replies, @mentions, the curator ----------
+const MENTIONS = D.mentions || [], MENTIONS_FROM = {}, MENTIONS_TO = {};
+for (const m of MENTIONS) { m.t = byId[m.from].t; (MENTIONS_FROM[m.from] ||= []).push(m); (MENTIONS_TO[m.to] ||= []).push(m); }
+const REPLIES = {};
+for (const e of D.edges) {  // graph edges are work-to-work: hang a reply on the first utterance from that work
+  const tgt = D.nodes.find(m => m.workId === e.to), who = D.nodes.find(m => m.workId === e.from) || null;
+  if (who) e.t = Math.max(e.t, who.t);   // a reply exists once its speaker has said it
+  if (tgt) (REPLIES[tgt.id] ||= []).push({ e, who });
+}
+const CUR = D.curatorReplies || {}, CUR_PROFILE = D.curatorProfile || {};
+const curT = id => byId[id].t + CUR_DT;          // when Curator's reply appears in the conversation
+const fmtWhen = t => { const y = Math.floor(t), m = Math.floor((t - y) * 12 + 1e-6);
+  return t >= 1900 ? new Date(y, m).toLocaleDateString([], { month: "short", year: "numeric" }) : fmtYear(y); };
+function curatorReligionAt(y) {
+  let hit = null;
+  for (const r of CUR_PROFILE.religion || []) { const [s, e] = spanOf(r.when); if (s !== null && s <= Math.floor(y)) hit = r; if (s !== null && s <= y && (e === null || y < e + 1)) return r; }
+  return hit;
+}
+// ---------- your posts (once the conversation reaches the present) ----------
+let POSTS = account.posts;   // everyone's messages, from the server (account.js); p.mine marks yours
+account.onChange(() => {
+  if (POSTS === account.posts) return;
+  POSTS = account.posts; keys.members = null; mineKey = null; renderMine(); refreshSlots(); renderThread();
+});
+const isPresent = () => state.year >= T1 - 1e-6;
+const myRepliesTo = id => POSTS.filter(p => p.thread === id);
+// Curator's replies can be edited in the app (curator mode). Edits live in this browser
+// until exported and merged into data/aphorisms.json with tools/apply_curator_edits.py.
+let CUR_EDITS = account.edits.reply;     // shared: loaded from the server (account.js)
+let curatorMode = false;                 // true only when signed in as the curator
+const curText = id => CUR_EDITS[id] ?? byId[id].interp;
+let CTX_EDITS = account.edits.context;   // shared: loaded from the server (account.js)
+const ctxText = n => CTX_EDITS[n.id] ?? n.context ?? "";
+function repliesNow(n) {
+  const out = [];
+  if (n.interp && CUR[n.id] && curT(n.id) <= state.year) out.push({ curator: true, written: CUR[n.id].t });
+  for (const r of REPLIES[n.id] || []) if (r.e.t <= state.year) out.push(r);
+  if (isPresent()) for (const p of myRepliesTo(n.id)) out.push({ mine: true, post: p });
+  return out;
+}
+
+// ---------- state ----------
+const saved = load("gc.state.v3", null);
+const state = { year: T0, window: 0, playing: false, channel: "all", civOn: new Set(), civClip: false, relOn: new Set(), pinned: null };
+if (saved) {
+  state.year = Math.max(T0, Math.min(T1, saved.year ?? T0)); state.window = saved.window || 0;
+  state.channel = chanById[saved.channel] && channelKindOn(chanById[saved.channel].kind) ? saved.channel : "all";
+  (saved.civOn || civKeys).forEach(k => civKeys.includes(k) && state.civOn.add(k));
+  (saved.relOn || []).forEach(k => relKeys.includes(k) && state.relOn.add(k));
+  state.civClip = !!saved.civClip;
+} else civKeys.forEach(k => state.civOn.add(k));
+// How each language is shown: "trans" (English), "orig" (the original words) or "both". Remembered in this browser.
+let langModes = load("gc.langModes", {}); if (typeof langModes !== "object" || !langModes) langModes = {};
+{ const old = load("quoteMode", null); if (typeof old === "string" && !Object.keys(langModes).length) langModes["*"] = old; }
+const modeFor = lang => langModes[lang] || langModes["*"] || "trans";
+const modesKey = () => JSON.stringify(langModes);
+let quoteMode = "trans";   // legacy name; per-language modes decide now
+const layout = Object.assign({ leftW: 300, sideW: 340, globeH: 280, profH: 380, popped: false, float: null }, load("gc.layout.v2", {}));
+const setVar = (k, v) => document.documentElement.style.setProperty(k, v + "px");
+setVar("--left-w", layout.leftW); setVar("--side-w", layout.sideW); setVar("--globe-h", layout.globeH);
+
+// ---------- globe: Bevy/WASM via globe.js (replaces globe.gl, the parchment canvas and DOM dots) ----------
+const globeEl = $("globe"), globeHost = $("globeHost"), keys = {};
+// The canvas follows its container on its own (pop-out, splitters); nothing to fit by hand.
+const fit = () => {};
+if (saved?.pov) globe.pointOfView(saved.pov);
+// The globe shows no popups. A click (not a drag) reports the dots under the pointer: none
+// closes the profile, like clicking anywhere else; one dot opens its
+// speaker's profile with that utterance selected; several by one speaker open the profile
+// without choosing; several speakers is ambiguous, so nothing happens. (Double-click zooms in
+// to separate them; the globe does that itself.)
+globe.on("picked", e => {
+  const said = e.nodes.map(i => D.nodes[i]).filter(Boolean);
+  if (!said.length) { if (prof.open) closeProfile(); return; }   // clicked the globe itself: click away
+  const speakers = [...new Set(said.map(n => n.author))];
+  if (speakers.length !== 1) return;
+  const who = speakers[0];
+  openProfile(who);
+  if (said.length === 1) {
+    prof.sel[who] = said[0].id; prof.tab = "utt"; keys.prof = null; updateProfile();
+    focusMsg(said[0].id);
+  }
+});
+globe.on("hovered", e => { globeEl.style.cursor = e.overDot ? "pointer" : ""; });
+globe.on("view", () => saveSoon());
+
+// ---------- channel list ----------
+const chanList = $("chanList");
+function buildChannels() {
+  const sect = (title, kind) => `<div class="cat" data-cat="${kind}">${title}</div><div class="chans">` +
+    CHANNELS.filter(c => c.kind === kind).map(c => `<div class="ch" data-ch="${esc(c.id)}" title="${esc(c.label)}">${kind === "all" ? `<span class="hash">#</span>` : `<span class="sw" style="background:${c.color}"></span>`}<span class="nm">${esc(c.name)}</span><span class="ct"></span></div>`).join("") + `</div>`;
+  chanList.innerHTML = sect("Topics", "all") + (FEATURES.civChannels ? sect("Civilizations", "civ") : "") + (FEATURES.relChannels ? sect("Religions", "rel") : "");
+  const closed = load("gc.closedCats", []);
+  chanList.querySelectorAll(".cat").forEach(c => { if (closed.includes(c.dataset.cat)) c.classList.add("closed"); });
+  $("chanSelect").innerHTML = ["all", "civ", "rel"].filter(channelKindOn).map(k => `<optgroup label="${k === "all" ? "Topics" : k === "civ" ? "Civilizations" : "Religions"}">` +
+    CHANNELS.filter(c => c.kind === k).map(c => `<option value="${esc(c.id)}"># ${esc(c.name)}</option>`).join("") + `</optgroup>`).join("");
+}
+buildChannels();
+chanList.addEventListener("click", e => {
+  const cat = e.target.closest(".cat");
+  if (cat) { cat.classList.toggle("closed"); save("gc.closedCats", [...chanList.querySelectorAll(".cat.closed")].map(c => c.dataset.cat)); return; }
+  const ch = e.target.closest(".ch"); if (ch) joinChannel(ch.dataset.ch);
+});
+$("chanSelect").onchange = e => joinChannel(e.target.value);
+function joinChannel(id) {
+  if (!chanById[id] || !channelKindOn(chanById[id].kind)) return;
+  state.channel = id; feedIds = []; feed.innerHTML = ""; closeThread(); $("chanPage").hidden = true;
+  const ch = chanById[id];
+  $("chanName").textContent = ch.name; $("chanTopic").textContent = ch.topic; $("chanSelect").value = id;
+  chanList.querySelectorAll(".ch").forEach(c => c.classList.toggle("on", c.dataset.ch === id));
+  buildEvents(); play.seg = null;
+  keys.nodes = keys.civ = keys.members = keys.prof = keys.tick = null; render(); saveSoon();
+}
+
+// ---------- messages ----------
+const feed = $("feed");
+function showQuote(n) {
+  if (!n.orig) return `<div class="paraphrase">${gloss(ctxText(n))}</div>`;
+  const orig = `<div class="orig" lang="${esc(n.lang)}">${esc(n.orig)}</div>`;
+  if (!n.trans) return orig;
+  const tr = `<div class="trans">${gloss(n.trans)}</div>`;
+  const mode = modeFor(n.lang);
+  if (mode === "orig") return orig;
+  if (mode === "both") return `<div class="orig foreign" lang="${esc(n.lang)}">${esc(n.orig)}</div>` + tr;
+  return tr;
+}
+const plain = s => String(s || "").replace(/\[[^\]]*\]/g, "");
+const snippet = (n, len = 110) => plain(modeFor(n.lang) === "orig" ? (n.orig || n.context) : (n.trans || n.orig || n.context)).slice(0, len);
+function mrefHTML(n) {
+  return (MENTIONS_FROM[n.id] || []).map(m => { const t = byId[m.to];
+    return `<div class="mref" data-jump="${esc(t.id)}" title="${esc(m.note || "")}"><span class="at">@${esc(speakerName(t))}</span><span class="mk">${esc(m.kind)}</span><span class="snip">${esc(snippet(t, 90))}</span>${t.t > state.year ? `<span class="mk">· later</span>` : ""}</div>`; }).join("");
+}
+function mentionedHTML(n) {
+  const ms = (MENTIONS_TO[n.id] || []).filter(m => m.t <= state.year); if (!ms.length) return "";
+  return `<div class="mentioned">↩ echoed by ${ms.map(m => `<span class="at" data-jump="${esc(m.from)}" title="${esc(m.note || "")}">@${esc(speakerName(byId[m.from]))}</span>`).join(" ")}</div>`;
+}
+const miniAv = r => r.mine ? `<span class="mini" style="background:#6b5a44">Y</span>` : r.curator ? `<span class="mini" style="background:var(--accent)">${esc(CURATOR[0])}</span>`
+  : `<span class="mini" style="${r.who ? avStyle(r.who.author, r.who.religion) : "background:#7a6a52"}">${r.who ? "" : "?"}</span>`;
+// Replies have two states: a preview under the message (default) and the open thread panel.
+// Inline thread state per message: "preview" (default) or "collapsed"; remembered in this browser.
+const collapsed = new Set(load("gc.collapsed", []));
+const setCollapsed = (id, on) => { on ? collapsed.add(id) : collapsed.delete(id); save("gc.collapsed", [...collapsed]); };
+const PREVIEW_MAX = 3;
+function replyRow(n, r) {
+  const name = r.mine ? "You" : r.curator ? CURATOR : r.who ? speakerName(r.who) : r.e.fromLabel;
+  const text = r.mine ? r.post.text : r.curator ? plain(curText(n.id)) : r.who ? snippet(r.who, 240) : r.e.aspect;
+  const note = r.mine ? (r.post.edited ? "edited" : "") : r.curator ? (CUR_EDITS[n.id] !== undefined ? "edited" : "") : `${r.e.kind} · ${r.e.valence > 0 ? "adopts" : r.e.valence < 0 ? "rejects" : "mixed"}`;
+  return `<div class="tp-row">${miniAv(r)}<div><div class="nm">${esc(name)}${note ? `<small>${esc(note)}</small>` : ""}${r.curator && curatorMode ? `<button class="tp-edit" data-curopen="${esc(n.id)}" title="Edit your reply">✎ Edit</button>` : ""}</div><div class="tx">${esc(text)}</div></div></div>`;
+}
+function previewHTML(n) {
+  const rs = repliesNow(n); if (!rs.length) return "";
+  const label = `${rs.length} ${rs.length === 1 ? "reply" : "replies"}`;
+  // The caret sits at the same spot (top left) in both states, so it never jumps out from under the mouse.
+  if (collapsed.has(n.id)) return `<div class="tchip" data-expand="${esc(n.id)}"><button class="tp-caret" data-expand="${esc(n.id)}" aria-expanded="false" aria-label="Show replies" title="Show replies"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="count">${label}</span></div>`;
+  const inPanel = openThreadId === n.id, shown = rs.slice(-PREVIEW_MAX), hidden = rs.length - shown.length;
+  return `<div class="tprev${inPanel ? " inpanel" : ""}">
+    <div class="tp-head"><button class="tp-caret" data-collapse="${esc(n.id)}" aria-expanded="true" aria-label="Collapse replies" title="Collapse replies"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 10l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="count">${label}${inPanel ? "<small>open in the panel</small>" : ""}</span>
+      <button class="tp-btn primary" data-thread="${esc(n.id)}" title="${inPanel ? "Close the thread panel" : "Open the whole thread"}">${inPanel ? "Close panel" : "Open thread ›"}</button></div>
+    ${hidden ? `<button class="tp-more" data-thread="${esc(n.id)}">${hidden} earlier ${hidden === 1 ? "reply" : "replies"}…</button>` : ""}
+    <div class="tp-rows">${shown.map(r => replyRow(n, r)).join("")}</div></div>`;
+}
+const slotHTML = n => mentionedHTML(n) + previewHTML(n);
+function sysHTML(e) {
+  return `<div class="sysmsg ${e.sys}" data-sys="${esc(e.id)}"><span class="sic" aria-hidden="true">${e.sys === "join" ? "→" : "·"}</span>
+    <span><b class="who" data-author="${esc(e.author)}">${esc(e.name)}</b> ${e.sys === "join" ? (COLLECTIVE.has(e.author) ? "entered the conversation" : "joined the conversation") : (COLLECTIVE.has(e.author) ? "is complete" : "has finished speaking")}</span>
+    <span class="st">${esc(fmtYear(Math.floor(e.t)))}</span></div>`;
+}
+function msgHTML(n, prev) {
+  if (n.kind === "sys") return sysHTML(n);
+  const cont = prev && prev.kind !== "sys" && prev.author === n.author && !prev.speaker && !n.speaker && !MENTIONS_FROM[n.id];
+  return `<div class="msg${cont ? " cont" : ""}" data-id="${esc(n.id)}">${mrefHTML(n)}
+    ${speakerAv(n, cont ? "small" : "")}
+    <div>${cont ? "" : `<div class="who" data-author="${esc(n.author)}">${esc(speakerName(n))}${n.speaker ? `<span class="rkind">in ${esc(n.authorName)}</span>` : ""}</div>`}
+      <div class="body">${n.work ? `<div class="from">From <i>${esc(n.work)}</i>${n.ref ? `, ${esc(n.ref)}` : ""}:</div>` : ""}<blockquote class="mq">${showQuote(n)}</blockquote></div><div class="cslot">${slotHTML(n)}</div></div></div>`;
+}
+const eraLabel = t => t < 1 ? `${ordinal(Math.ceil((1 - t) / 100))} century BC` : `${ordinal(Math.floor(t / 100) + 1)} century AD`;
+let feedIds = [];
+// ---------- unread: a message counts as read once at least half of it has been on screen ----------
+const SEEN = new Set(load("gc.seen.v1", []));
+let seenSaveT;
+// Visible = at least half of the message inside the feed's viewport. Checked on scroll and after renders.
+function markSeen() {
+  if (document.hidden) return;
+  const fr = feed.getBoundingClientRect(); let changed = false;
+  for (const m of feed.querySelectorAll(".msg[data-id]")) {
+    const id = m.dataset.id; if (SEEN.has(id)) continue;
+    const r = m.getBoundingClientRect(); if (!r.height) continue;
+    const vis = Math.min(r.bottom, fr.bottom) - Math.max(r.top, fr.top);
+    if (vis >= Math.min(r.height, fr.height) * .5) { SEEN.add(id); changed = true; }
+  }
+  if (changed) { updateUnread(); clearTimeout(seenSaveT); seenSaveT = setTimeout(() => save("gc.seen.v1", [...SEEN]), 800); }
+}
+let seenRaf = 0;
+const watchUnread = () => { cancelAnimationFrame(seenRaf); seenRaf = requestAnimationFrame(markSeen); };
+feed.addEventListener("scroll", watchUnread, { passive: true });
+addEventListener("resize", watchUnread);
+document.addEventListener("visibilitychange", watchUnread);
+function updateUnread() {
+  const y = state.year, w = state.window;
+  chanList.querySelectorAll(".ch").forEach(el => {
+    const c = chanById[el.dataset.ch];
+    const said = D.nodes.filter(n => n.t <= y && (!w || y - (n.t1 ?? n.t) <= w) && inChannel(n, c));
+    const k = said.filter(n => !SEEN.has(n.id)).length;
+    el.querySelector(".ct").textContent = k ? (k > 99 ? "99+" : k) : "";
+    el.querySelector(".ct").title = k ? `${k} unread` : "";
+    el.classList.toggle("empty", !said.length); el.classList.toggle("unread", k > 0);
+  });
+}
+function renderFeed(nodes) {
+  const ids = nodes.map(n => n.id);
+  const atBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 120;
+  const isAppend = ids.length >= feedIds.length && feedIds.every((id, i) => ids[i] === id);
+  if (!isAppend) feed.innerHTML = "";
+  else if (ids.length !== feedIds.length) feed.querySelector(".hold-spacer")?.remove();
+  let html = "", prev = isAppend && feedIds.length ? byId[feedIds[feedIds.length - 1]] : null;
+  let era = prev ? eraLabel(prev.t) : null;
+  for (let i = isAppend ? feedIds.length : 0; i < nodes.length; i++) {
+    const n = nodes[i], e = eraLabel(n.t);
+    if (e !== era) { html += `<div class="era">${e}</div>`; era = e; prev = null; }
+    html += msgHTML(n, prev).replace(/class="(msg|sysmsg)/, isAppend && feedIds.length ? 'class="arrive $1' : 'class="$1'); prev = n;
+  }
+  if (!nodes.length) html = `<div class="empty-chan">Nobody has spoken in #${esc(chanById[state.channel].name)} yet, as of ${esc(clockText())}.</div>`;
+  if (html) feed.insertAdjacentHTML("beforeend", html);
+  if (nodes.length) feed.querySelector(".empty-chan")?.remove();
+  feedIds = ids;
+  if (html && (atBottom || state.playing)) feed.scrollTop = feed.scrollHeight;
+  requestAnimationFrame(watchUnread);
+}
+function refreshSlots(keepPinned = false) {
+  const atBottom = !keepPinned && feed.scrollHeight - feed.scrollTop - feed.clientHeight < 120;
+  feed.querySelectorAll(".msg[data-id]").forEach(m => { const s = m.querySelector(".cslot"); if (!s) return; const h = slotHTML(byId[m.dataset.id]); if (s._h !== h) { s.innerHTML = h; s._h = h; } });
+  if (atBottom || state.playing) feed.scrollTop = feed.scrollHeight;
+}
+function focusMsg(id) {
+  let m = feed.querySelector(`[data-id="${CSS.escape(id)}"]`);
+  if (!m && state.channel !== "all") { joinChannel("all"); m = feed.querySelector(`[data-id="${CSS.escape(id)}"]`); }
+  if (!m) return;
+  m.scrollIntoView({ block: "center", behavior: "smooth" }); m.classList.remove("flash"); void m.offsetWidth; m.classList.add("flash");
+}
+feed.addEventListener("click", e => {
+  const tog = e.target.closest("[data-expand], [data-collapse]");
+  if (tog) {   // collapse / expand without the caret moving out from under the pointer
+    const id = tog.dataset.expand || tog.dataset.collapse, msg = tog.closest(".msg");
+    const before = msg.querySelector(".tp-caret").getBoundingClientRect().top;
+    setCollapsed(id, !!tog.dataset.collapse); refreshSlots(true);
+    let after = msg.querySelector(".tp-caret")?.getBoundingClientRect().top;
+    if (after !== undefined) {
+      feed.scrollTop += after - before;
+      after = msg.querySelector(".tp-caret").getBoundingClientRect().top;
+      if (after - before > 1) {   // near the bottom there is nothing left to scroll: hold the space with a spacer
+        let sp = feed.querySelector(".hold-spacer");
+        if (!sp) { sp = document.createElement("div"); sp.className = "hold-spacer"; feed.appendChild(sp); }
+        sp.style.height = (parseFloat(sp.style.height) || 0) + (after - before) + "px";
+        feed.scrollTop += msg.querySelector(".tp-caret").getBoundingClientRect().top - before;
+      }
+    }
+    msg.querySelector(".tp-caret")?.focus({ preventScroll: true });
+    return;
+  }
+  const tp = e.target.closest("[data-thread]"); if (tp) { openThreadId === tp.dataset.thread ? closeThread() : openThread(tp.dataset.thread); return; }
+  const at = e.target.closest(".mref, .mentioned .at"); if (at) { focusMsg(at.dataset.jump); return; }
+  if (e.target.closest(".av, .who, a")) return;
+  const m = e.target.closest("[data-id]"); if (!m) return;
+  const n = byId[m.dataset.id]; globe.pointOfView({ lat: n.lat, lng: n.lon, altitude: Math.min(globe.pointOfView().altitude, 1.4) }, 900);
+});
+feed.addEventListener("mouseover", e => {
+  const m = e.target.closest("[data-id]");
+  globe.highlight(m ? m.dataset.id : null);
+});
+feed.addEventListener("mouseleave", () => globe.highlight(null));
+
+const fmtNow = iso => new Date(iso).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+function myPostHTML(p) {
+  const who = p.mine ? "You" : p.authorName || "A listener";
+  const initials = p.mine ? "You" : who.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  return `<div class="msg mine${p.mine ? "" : " other"}" data-post="${esc(p.id)}"><div class="av">${esc(initials)}</div><div><div class="who">${esc(who)}<span class="when">${esc(fmtNow(p.at))}${p.edited ? " · edited" : ""}</span></div>
+    <div class="body plain-text">${esc(p.text)}</div></div>
+    ${p.mine ? `<div class="mine-tools"><button data-edit="${esc(p.id)}" title="Edit your message">✎ Edit</button><button data-del="${esc(p.id)}" title="Delete your message">Delete</button></div>` : ""}</div>`;
+}
+// Two-click delete: the first click arms the button, the second deletes.
+function confirmDelete(btn) {
+  if (btn.dataset.armed) return true;
+  btn.dataset.armed = "1"; btn.textContent = "Really delete?"; btn.style.color = "var(--accent)";
+  setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = "Delete"; btn.style.color = ""; } }, 3000);
+  return false;
+}
+function startEdit(id) {
+  document.querySelectorAll(`.msg.mine[data-post="${CSS.escape(id)}"]`).forEach(m => {
+    const p = POSTS.find(x => x.id === id); if (!p || !p.mine || m.classList.contains("editing")) return;
+    m.classList.add("editing");
+    const body = m.querySelector(".body");
+    body.outerHTML = `<form class="compose editbox" data-editing="${esc(id)}"><textarea rows="2" aria-label="Edit your message">${esc(p.text)}</textarea>
+      <div class="editbtns"><button type="button" class="ghost" data-cancel="${esc(id)}">Cancel</button><button type="submit">Save</button></div></form>`;
+    const ta = m.querySelector("textarea"); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+    ta.style.height = Math.min(220, ta.scrollHeight) + "px";
+  });
+}
+function finishEdit(id, text) {
+  const p = POSTS.find(x => x.id === id);
+  if (p && p.mine && text !== null && text.trim() && text.trim() !== p.text) { p.text = text.trim(); p.edited = new Date().toISOString(); account.editPost(id, p.text); }
+  mineKey = null; renderMine(); refreshSlots(); renderThread();
+}
+let mineKey = null;
+function renderMine() {
+  if (feed.querySelector(".msg.mine.editing")) return;
+  const posts = isPresent() ? POSTS.filter(p => p.channel === state.channel && !p.thread) : [];
+  const key = posts.map(p => p.id + (p.edited || "")).join() + "|" + modesKey();
+  if (key === mineKey && feed.querySelector(".mine-block") === feed.lastElementChild) return;
+  mineKey = key;
+  feed.querySelectorAll(".mine-block").forEach(x => x.remove());
+  if (!posts.length) return;
+  feed.insertAdjacentHTML("beforeend", `<div class="mine-block"><div class="era">Today</div>${posts.map(myPostHTML).join("")}</div>`);
+  feed.scrollTop = feed.scrollHeight;
+}
+function composerHTML(where) {
+  const ch = chanById[state.channel], live = isPresent();
+  const ph = where === "thread" ? "Reply to the thread…" : `Message #${esc(ch.name)}`;
+  // Before the present the box looks normal but is disabled, with the reason as its tooltip.
+  return `<form class="compose${live ? "" : " disabled"}" data-where="${where}"${live ? "" : ` title="Current time is in the past" aria-disabled="true"`}>
+    <textarea rows="1" placeholder="${ph}" aria-label="Your message"${live ? "" : " disabled"}></textarea><button type="submit" disabled>Send</button></form>`;
+}
+let composeKey = null;
+function renderComposers() {
+  const key = isPresent() + "|" + state.channel + "|" + openThreadId;
+  if (key === composeKey) return;
+  composeKey = key;
+  $("composer").innerHTML = composerHTML("channel");
+  $("threadComposer").innerHTML = openThreadId ? composerHTML("thread") : "";
+}
+function post(text, where) {
+  text = text.trim(); if (!text) return;
+  account.post(state.channel, where === "thread" ? openThreadId : null, text);   // the page refreshes when it's saved keys.members = null; render(); mineKey = null; renderMine(); refreshSlots(); renderThread();
+  if (where === "thread") $("threadBody").scrollTop = $("threadBody").scrollHeight;
+}
+document.addEventListener("submit", e => {
+  const ed = e.target.closest("[data-editing]");
+  if (ed) { e.preventDefault(); finishEdit(ed.dataset.editing, ed.querySelector("textarea").value); return; }
+  const f = e.target.closest(".compose"); if (!f) return; e.preventDefault();
+  const ta = f.querySelector("textarea"); post(ta.value, f.dataset.where); ta.value = ""; ta.style.height = ""; f.querySelector("button").disabled = true;
+});
+document.addEventListener("input", e => {
+  const ta = e.target.closest(".compose textarea"); if (!ta) return;
+  ta.style.height = "auto"; ta.style.height = Math.min(160, ta.scrollHeight) + "px";
+  const send = ta.closest(".compose").querySelector('button[type="submit"]'); if (send) send.disabled = !ta.value.trim();
+});
+document.addEventListener("keydown", e => {
+  const ta = e.target.closest?.(".compose textarea");
+  if (ta && e.key === "Escape" && ta.closest("[data-editing]")) { e.preventDefault(); e.stopPropagation(); finishEdit(ta.closest("[data-editing]").dataset.editing, null); return; }
+  if (ta && ta.closest("[data-curediting]")) return;
+  if (ta && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ta.closest(".compose").requestSubmit(); }
+});
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-present]")) { setPlaying(false); jump(T1); return; }
+  const ed = e.target.closest("[data-edit]"); if (ed) { startEdit(ed.dataset.edit); return; }
+  const ca = e.target.closest("[data-cancel]"); if (ca) { finishEdit(ca.dataset.cancel, null); return; }
+  const d = e.target.closest("[data-del]");
+  if (d && confirmDelete(d)) { account.deletePost(d.dataset.del); mineKey = null; renderMine(); refreshSlots(); renderThread(); }
+});
+
+function curReplyHTML(n, r) {
+  const edited = CUR_EDITS[n.id] !== undefined;
+  return `<div class="msg curator${curatorMode ? " editable" : ""}" data-cur="${esc(n.id)}"><div class="av cur" data-curator="1">${esc(CURATOR[0])}</div><div><div class="who" data-curator="1">${esc(CURATOR)}<span class="rkind">written ${esc(fmtWhen(r.written))}${edited ? " · edited" : ""}</span></div>
+    <div class="body" style="font-size:16px">${gloss(curText(n.id))}</div></div>
+    ${curatorMode ? `<div class="mine-tools"><button data-curedit="${esc(n.id)}" title="Edit your reply">✎ Edit</button>${edited ? `<button data-currevert="${esc(n.id)}" title="Go back to the text in the data">Revert</button>` : ""}</div>` : ""}</div>`;
+}
+function startCurEdit(id) {
+  const m = $("threadBody").querySelector(`.msg.curator[data-cur="${CSS.escape(id)}"]`); if (!m || m.classList.contains("editing")) return;
+  if (!curatorMode) return;
+  m.classList.add("editing");
+  m.querySelector(".body").outerHTML = `<form class="compose editbox" data-curediting="${esc(id)}"><textarea rows="3" aria-label="Edit your reply">${esc(curText(id))}</textarea>
+    <div class="editbtns"><span class="sub" style="margin-right:auto">Glosses: word[short meaning]</span><button type="button" class="ghost" data-curcancel="${esc(id)}">Cancel</button><button type="submit">Save</button></div></form>`;
+  const ta = m.querySelector("textarea"); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); ta.style.height = Math.min(260, ta.scrollHeight) + "px";
+}
+function finishCurEdit(id, text) {
+  if (text !== null) { text = text.trim();
+    if (text && text !== byId[id].interp) CUR_EDITS[id] = text; else if (text === byId[id].interp) delete CUR_EDITS[id];
+    account.sync("reply", CUR_EDITS); }
+  $("threadBody").querySelector(".msg.curator.editing")?.classList.remove("editing");
+  renderThread(); refreshSlots(); keys.prof = null;
+}
+document.addEventListener("click", e => {
+  const ed = e.target.closest("[data-curedit]"); if (ed) { startCurEdit(ed.dataset.curedit); return; }
+  const rv = e.target.closest("[data-currevert]"); if (rv && confirmDelete(rv)) { delete CUR_EDITS[rv.dataset.currevert]; account.sync("reply", CUR_EDITS); renderThread(); refreshSlots(); return; }
+  const ca = e.target.closest("[data-curcancel]"); if (ca) { finishCurEdit(ca.dataset.curcancel, null); return; }
+  const pe = e.target.closest("[data-curopen]"); if (pe) { openThread(pe.dataset.curopen); requestAnimationFrame(() => startCurEdit(pe.dataset.curopen)); }
+});
+document.addEventListener("submit", e => { const f = e.target.closest("[data-curediting]"); if (f) { e.preventDefault(); e.stopImmediatePropagation(); finishCurEdit(f.dataset.curediting, f.querySelector("textarea").value); } }, true);
+document.addEventListener("keydown", e => {
+  const f = e.target.closest?.("[data-curediting]"); if (!f) return;
+  if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finishCurEdit(f.dataset.curediting, null); }
+  else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); f.requestSubmit(); }
+}, true);
+
+// ---------- thread panel (open state) ----------
+let openThreadId = null;
+function openThread(id) { openThreadId = id; $("thread").hidden = false; renderThread(); refreshSlots(); renderComposers(); }
+function closeThread() { if (!openThreadId) return; openThreadId = null; $("thread").hidden = true; refreshSlots(); renderComposers(); }
+$("threadClose").onclick = closeThread;
+function renderThread() {
+  if (!openThreadId || $("threadBody").querySelector(".msg.mine.editing, .msg.curator.editing")) return;
+  const n = byId[openThreadId], rs = repliesNow(n);
+  const parent = `<div class="msg" data-tid="${esc(n.id)}">${speakerAv(n)}<div><div class="who" data-author="${esc(n.author)}">${esc(speakerName(n))}</div><div class="body">${showQuote(n)}</div></div></div>`;
+  const items = rs.map(r => {
+    if (r.mine) return myPostHTML(r.post);
+    if (r.curator) return curReplyHTML(n, r);
+    const w = r.who, val = r.e.valence > 0 ? "adopts" : r.e.valence < 0 ? "rejects" : "mixed";
+    return `<div class="msg" ${w ? `data-jump="${esc(w.id)}"` : ""}>${w ? avHTML(w.author, w.religion) : `<div class="av" style="background:#7a6a52">?</div>`}
+      <div><div class="who" ${w ? `data-author="${esc(w.author)}"` : ""}>${esc(w ? w.authorName : r.e.fromLabel)}<span class="rkind">${esc(r.e.kind)} · ${val} · ${fmtYear(Math.round(r.e.t))}</span></div>
+      <div class="body" style="font-size:16px">${w ? showQuote(w) : `<i>${esc(r.e.fromLabel)}</i>`}</div><div class="rmeta">${esc(r.e.aspect)}</div></div></div>`;
+  }).join("");
+  const later = (REPLIES[n.id] || []).filter(r => r.e.t > state.year).length + (n.interp && CUR[n.id] && curT(n.id) > state.year ? 1 : 0);
+  $("threadBody").innerHTML = parent + `<div class="tsep">${rs.length} ${rs.length === 1 ? "reply" : "replies"}${later ? ` · ${later} more later in time` : ""}</div>` + items;
+}
+$("threadBody").addEventListener("click", e => { const j = e.target.closest("[data-jump]"); if (j && !e.target.closest(".av, .who")) focusMsg(j.dataset.jump); });
+
+// ---------- members (top right) ----------
+const membersEl = $("members");
+let typingWho = null;   // author id or "@curator"
+function renderMembers(y) {
+  const ch = chanById[state.channel];
+  const ids = authorsInData.filter(aid => D.nodes.some(n => n.author === aid && inChannel(n, ch)));
+  const living = [], dead = [];
+  for (const aid of ids) {
+    const [b, d] = lifeOf(aid); if (b > y && typingWho !== aid) continue;
+    const isDead = d !== null && d < y;
+    const when = isDead ? d : y, pl = placeAt(aid, when), rel = religionAt(aid, when), civ = pl ? civAt(pl, when) : null;
+    (isDead ? dead : living).push({ aid, b, d, isDead, rel, civ });
+  }
+  living.sort((p, q) => p.b - q.b); dead.sort((p, q) => q.d - p.d);
+  const sel = profTarget();
+  const typ = `<span class="typ dots"><i></i><i></i><i></i></span>`;
+  const row = m => { const a = D.authors[m.aid] || {}, rf = m.rel?.family;
+    return `<div class="mem${m.isDead ? " dead" : ""}${sel === m.aid ? " sel" : ""}${typingWho === m.aid ? " typing" : ""}" data-author="${esc(m.aid)}">${avHTML(m.aid, rf)}
+      <div><div class="nm">${esc(a.name || m.aid)}${m.isDead && !COLLECTIVE.has(m.aid) ? `<span class="dagger" title="died ${fmtYear(m.d)}">†</span>` : ""}${typ}</div>
+      <div class="tags">${m.civ ? `<span class="pill" title="${esc(m.civ.name)}"><i style="background:${civColor(m.civ.civ)}"></i>${esc(m.civ.name.replace(/\s*\(.*\)$/, ""))}</span>` : ""}${rf ? `<span class="pill" title="${esc(m.rel.detail || rf)}"><i style="background:${RELCOL[rf] || "#999"}"></i>${esc(rf)}</span>` : ""}</div></div></div>`; };
+  const curHere = Object.keys(CUR).filter(id => curT(id) <= y && inChannel(byId[id], ch)).length;
+  const cr = curatorReligionAt(y);
+  const curRow = (curHere || typingWho === "@curator") ? `<div class="mhead">Curator</div><div class="mem${sel === "@curator" ? " sel" : ""}${typingWho === "@curator" ? " typing" : ""}" data-curator="1"><div class="av cur" data-curator="1">${esc(CURATOR[0])}</div>
+      <div><div class="nm">${esc(CURATOR)}${typ}</div><div class="tags">${cr ? `<span class="pill"><i style="background:${RELCOL[cr.family] || "#999"}"></i>${esc(cr.label || cr.family)}</span>` : ""}<span class="pill">${curHere} repl${curHere === 1 ? "y" : "ies"} here</span></div></div></div>` : "";
+  const mineHere = isPresent() && POSTS.some(p => p.mine && p.channel === state.channel);
+  const youRow = mineHere ? `<div class="mhead">You</div><div class="mem"><div class="av" style="background:#6b5a44;font-size:11px">You</div><div><div class="nm">${esc(account.me?.displayName || "You")}</div><div class="tags"><span class="pill">${POSTS.filter(p => p.mine && p.channel === state.channel).length} message(s) here</span></div></div></div>` : "";
+  membersEl.innerHTML = youRow + curRow + (living.length ? `<div class="mhead">Active — ${living.length}</div>` + living.map(row).join("") : "")
+    + (dead.length ? `<div class="mhead">Inactive — ${dead.length}</div>` + dead.map(row).join("") : "")
+    + (!curRow && !living.length && !dead.length ? `<div class="mhead">No members yet</div>` : "");
+}
+membersEl.addEventListener("click", e => {
+  const m = e.target.closest(".mem"); if (!m) return;
+  if (m.dataset.curator || !m.dataset.author) return;
+  if (prof.open && !prof.follow && prof.who === m.dataset.author) closeProfile(); else openProfile(m.dataset.author);
+});
+membersEl.addEventListener("scroll", () => placeProfile());
+
+// ---------- speaker profile: floating card anchored at the member list ----------
+// The person never changes with time; only the selected utterance follows the conversation.
+let latestSpeaker = null;
+const prof = { open: false, who: null, follow: false, sel: {}, autoSeen: {} };
+const profTarget = () => prof.open ? (prof.follow ? latestSpeaker : prof.who) : null;
+function openProfile(aid) { prof.open = true; prof.who = aid; prof.follow = false; keys.prof = null; keys.members = null; render();
+  const row = membersEl.querySelector(`.mem[data-author="${CSS.escape(aid)}"]`); row?.scrollIntoView({ block: "nearest" }); placeProfile(); }
+function closeProfile() { prof.open = false; $("prof").hidden = true; keys.members = null; render(); }
+$("profClose").onclick = closeProfile;
+const LANGS_ALL = { grc: "Ancient Greek", ang: "Old English", la: "Latin", sa: "Sanskrit", he: "Hebrew", ar: "Arabic", fa: "Persian", enm: "Middle English", fro: "Old French" };
+const langLabel = l => LANGS_ALL[l] || (() => { try { const n = new Intl.DisplayNames(["en"], { type: "language" }).of(l); return n && n !== l ? n : l; } catch { return l || "the original"; } })();
+const saidBy = aid => D.nodes.filter(n => n.author === aid);
+const newestSaid = aid => { const ns = saidBy(aid).filter(n => n.t <= state.year); return ns[ns.length - 1] || null; };
+// Read aloud (coming later): each utterance in its own language by a language-specific voice.
+const speakButton = n => `<button type="button" class="speak" aria-disabled="true" tabindex="0" aria-label="Hear it read aloud (coming soon)" title="Hear it read aloud in ${esc(langLabel(n.lang))} (coming soon)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>`;
+function utteranceDetail(n) {
+  const threads = D.edges.filter(e => n.workId && e.from === n.workId);
+  const ments = (MENTIONS_FROM[n.id] || []).concat(MENTIONS_TO[n.id] || []);
+  // Always the original first, then the English when there is a translation; both block quotes.
+  const quote = n.orig ? `<div class="qrow"><blockquote class="orig" lang="${esc(n.lang)}">${esc(n.orig)}</blockquote>${speakButton(n)}</div>`
+                         + (n.trans ? `<blockquote class="en" lang="en">${gloss(n.trans)}</blockquote>` : "")
+                       : `<div class="uq" style="font-style:italic;color:var(--ink-2)">${gloss(ctxText(n))}</div><div class="ut">No direct quote in the record.</div>`;
+  const row = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : "";
+  return `<div class="udetail">${quote}
+    <div class="ufacts"><dl>${row("Spoken by", n.speaker ? `${esc(speakerName(n))}<span class="ut"> · ${esc(n.speaker.note || "")}</span>` : "")}
+      ${row("Work", `<i>${esc(n.work)}</i>`)}${row("Passage", esc(n.ref || ""))}${row("Date", esc(edtf(n.date)))}${row("Place", esc(n.placeName))}
+      ${row("Language", n.lang ? esc(langLabel(n.lang)) : "")}${row("Translation", n.trans ? esc(n.transBy || "uncredited") : "")}
+      ${row("Source", n.url ? `<a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.sourceLabel || "source text")} ↗</a>` : esc(n.sourceLabel || ""))}</dl>
+    <div class="uctx"><label class="flabel" for="ctx-${esc(n.id)}">Context${CTX_EDITS[n.id] !== undefined ? ` <span class="edited">· edited</span>` : ""}<span class="saved" aria-live="polite"></span></label>
+      ${curatorMode
+        ? `<textarea id="ctx-${esc(n.id)}" class="ctxedit" data-ctx="${esc(n.id)}" rows="6" placeholder="What is happening when these words are said or written…">${esc(ctxText(n))}</textarea>
+           <div class="fhint">Saved as you type · glosses: word[short meaning]${CTX_EDITS[n.id] !== undefined ? ` · <button class="linkbtn" data-ctxrevert="${esc(n.id)}">revert</button>` : ""}</div>`
+        : `<div class="ctxread" id="ctx-${esc(n.id)}">${ctxText(n) ? gloss(ctxText(n)) : `<span class="ut">No context recorded.</span>`}</div>
+           <div class="fhint">Editable in curator mode (Settings → Curator).</div>`}
+    </div></div>
+    ${threads.length || ments.length ? `<div class="links">${threads.map(e => `<div class="pu-th">↳ ${esc(e.kind)} <b>${esc(labelOf(e.to, e.toLabel))}</b> · ${e.valence > 0 ? "adopts" : e.valence < 0 ? "rejects" : "mixed"} — <i>${esc(e.aspect)}</i></div>`).join("")}
+      ${ments.map(m => `<div class="pu-th">@ ${m.from === n.id ? `calls back to <b>${esc(speakerName(byId[m.to]))}</b>` : `echoed by <b>${esc(speakerName(byId[m.from]))}</b>`} · ${esc(m.kind)} — <i>${esc(m.note || "")}</i></div>`).join("")}</div>` : ""}
+    ${n.t > state.year ? `<div class="ut" style="margin-top:8px">Not yet said at this point in the conversation.</div>` : ""}
+  </div>`;
+}
+// Profile: who they were (static), then two tabs: their Utterances, and their Life (moves and faith over time).
+function lifeTimeline(a) {
+  const ev = [];
+  for (const p of a.places || []) { const [s0, s1] = spanOf(p.when); ev.push({ t: s0 ?? -99999, end: s1, kind: "place", label: p.name, when: p.when }); }
+  for (const r of a.religion || []) { const [s0, s1] = spanOf(r.when); ev.push({ t: s0 ?? -99999, end: s1, kind: "faith", label: r.family + (r.detail ? " · " + r.detail : ""), when: r.when }); }
+  ev.sort((x, y) => x.t - y.t || (x.kind === "faith") - (y.kind === "faith"));
+  if (!ev.length) return `<p class="note">No record of where they lived or what they believed.</p>`;
+  return `<ol class="life">${ev.map(e => `<li class="${e.kind}"><span class="when">${esc(edtf(e.when))}</span><span class="dot"></span><span class="what"><span class="k">${e.kind === "place" ? "Lived" : "Religion"}</span>${esc(e.label)}</span></li>`).join("")}</ol>`;
+}
+function personHTML(aid) {
+  const a = D.authors[aid] || {}, pt = a.portrait, mine = saidBy(aid);
+  const sel = byId[prof.sel[aid]] || newestSaid(aid) || mine[0];
+  const short = n => plain(n.orig ? (n.trans || n.orig) : n.context).slice(0, 80);
+  const lastPlace = (a.places || []).slice(-1)[0], lastFaith = (a.religion || []).slice(-1)[0];
+  const tab = prof.tab || "utt";
+  return `<div class="prof-head">
+    ${pt ? `<figure class="prof-pic"><img src="${esc(pt.thumb)}" alt="${esc(a.name || aid)}"><a class="launch" href="${esc(pt.commons)}" target="_blank" rel="noopener" title="Open the image's page (${esc(pt.license)})" aria-label="Open the image's source page in a new tab">↗</a></figure>`
+         : `<div class="prof-pic">${avHTML(aid)}</div>`}
+    <div class="prof-id"><h2 class="prof-name">${esc(a.name || aid)}</h2>
+      <div class="meta">${esc(edtf(a.life))}${a.role ? " · " + esc(a.role) : ""}</div>
+      <dl class="prof-facts">
+        ${lastPlace ? `<dt>Lived</dt><dd>${esc(lastPlace.name)}</dd>` : ""}
+        ${lastFaith ? `<dt>Religion</dt><dd>${esc(lastFaith.family)}${lastFaith.detail ? `<span class="meta"> · ${esc(lastFaith.detail)}</span>` : ""}</dd>` : ""}
+      </dl></div></div>
+    <div class="ptabs" role="tablist">
+      <button role="tab" data-ptab="utt" aria-selected="${tab === "utt"}">Utterances <span class="c">${mine.length}</span></button>
+      <button role="tab" data-ptab="life" aria-selected="${tab === "life"}">Life</button>
+    </div>
+    ${tab === "life" ? lifeTimeline(a) : `
+    <div class="ulist" role="listbox" aria-label="Utterances">${mine.map(n => `<div class="uopt${n === sel ? " on" : ""}${n.t > state.year ? " later" : ""}" role="option" tabindex="0" aria-selected="${n === sel}" data-pick="${esc(n.id)}"><span class="q">${esc(short(n))}</span><span class="d">${esc(n.ref || edtf(n.date))}</span>${n.t <= state.year
+      ? `<button class="ugo" data-goto="${esc(n.id)}" title="Go to it in the channel" aria-label="Go to it in the channel"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h8M8 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`
+      : `<span class="ugo off" title="Not yet said"></span>`}</div>`).join("")}</div>
+    ${sel ? utteranceDetail(sel) : ""}`}`;
+}
+function placeProfile() {
+  const el = $("prof"); if (el.hidden) return;
+  const side = $("side").getBoundingClientRect(), h = el.offsetHeight;
+  const row = membersEl.querySelector(`.mem[data-author="${CSS.escape(profTarget() || "")}"]`);
+  const r = row ? row.getBoundingClientRect() : null, visible = r && r.bottom > side.top && r.top < side.bottom;
+  const anchorY = visible ? r.top + r.height / 2 : side.top + 40;
+  const top = Math.max(64, Math.min(innerHeight - 56 - h, anchorY - 40));
+  el.style.right = (innerWidth - side.left + 12) + "px"; el.style.top = top + "px";
+}
+addEventListener("resize", () => placeProfile());
+function updateProfile() {
+  const who = profTarget(), el = $("prof");
+  if (!who) { el.hidden = true; return; }
+  // the selected utterance follows the conversation: each new one from this speaker becomes the selection
+  const newest = newestSaid(who);
+  if (newest && prof.autoSeen[who] !== newest.id) { prof.autoSeen[who] = newest.id; prof.sel[who] = newest.id; keys.prof = null; }
+  const key = who + "|" + prof.tab + "|" + prof.sel[who] + "|" + curatorMode + "|" + modesKey() + "|" + (newest?.id || "");
+  if (key !== keys.prof && document.activeElement?.matches?.("#profBody .ctxedit")) return;   // never yank the editor away mid-sentence
+  if (key !== keys.prof) {
+    const keepScroll = keys.profWho === who ? $("profBody").scrollTop : 0;
+    keys.prof = key; keys.profWho = who;
+    $("profBody").innerHTML = personHTML(who); $("profBody").scrollTop = keepScroll;
+    el.hidden = false;
+    const on = $("profBody").querySelector(".uopt.on"); on?.scrollIntoView({ block: "nearest" });
+  }
+  el.hidden = false; placeProfile();
+}
+$("profBody").addEventListener("keydown", e => { const r = e.target.closest(".uopt[data-pick]"); if (r && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); r.click(); } });
+let ctxTimer;
+$("profBody").addEventListener("input", e => {
+  const ta = e.target.closest("[data-ctx]"); if (!ta) return;
+  clearTimeout(ctxTimer);
+  ctxTimer = setTimeout(() => {
+    const id = ta.dataset.ctx, n = byId[id], v = ta.value.trim();
+    if (v === (n.context || "").trim()) delete CTX_EDITS[id]; else CTX_EDITS[id] = v;
+    account.sync("context", CTX_EDITS); syncCuratorUI();
+    const lab = ta.closest(".uctx").querySelector(".saved"); lab.textContent = " · saved"; setTimeout(() => lab.textContent = "", 1500);
+    if (!n.orig) feed.querySelectorAll(`.msg[data-id="${CSS.escape(id)}"] .body`).forEach(b => b.innerHTML = showQuote(n));
+  }, 500);
+});
+$("profBody").addEventListener("click", e => {
+  const rv = e.target.closest("[data-ctxrevert]");
+  if (rv && confirmDelete(rv)) { delete CTX_EDITS[rv.dataset.ctxrevert]; account.sync("context", CTX_EDITS); syncCuratorUI(); keys.prof = null; updateProfile(); return; }
+  const pt = e.target.closest("[data-ptab]"); if (pt) { prof.tab = pt.dataset.ptab; keys.prof = null; updateProfile(); return; }
+  const go = e.target.closest(".ugo[data-goto]"); if (go) { focusMsg(go.dataset.goto); return; }
+  const pk = e.target.closest("[data-pick]"); if (pk) { prof.sel[profTarget()] = pk.dataset.pick; keys.prof = null; updateProfile(); return; }
+  const g = e.target.closest("[data-goto]"); if (g) focusMsg(g.dataset.goto);
+});
+// clicking an avatar or name anywhere opens that speaker's profile
+document.addEventListener("click", e => {
+  if (e.target.closest("#members, #prof")) return;
+  if (e.target.closest("[data-curator]")) return;
+  const who = e.target.closest(".av[data-author], .who[data-author]");
+  if (who) { e.stopPropagation(); mini.style.display = "none"; openProfile(who.dataset.author); }
+}, true);
+addEventListener("keydown", e => { if (e.key === "Escape" && prof.open) closeProfile(); });
+// light dismiss: a click anywhere outside the card closes it (members and avatars open another one instead)
+document.addEventListener("pointerdown", e => {
+  if (!prof.open || $("prof").hidden) return;
+  if (e.target.closest("#prof, #members, #globe, .av[data-author], .who[data-author], #settingsDlg, #meMenu")) return;
+  closeProfile();
+});
+
+// ---------- mini profile on hover over a message ----------
+const mini = $("mini");
+document.addEventListener("mouseover", e => {
+  const host = e.target.closest("#feed .msg[data-id], #threadBody .msg[data-jump], #threadBody .msg[data-tid], #threadBody .msg.curator");
+  if (!host || !e.target.closest(".av, .who")) { mini.style.display = "none"; return; }
+  let html;
+  if (host.classList.contains("curator")) {
+    const rel = curatorReligionAt(state.year);
+    html = `<div class="mh"><div class="av cur">${esc(CURATOR[0])}</div><div><div class="nm">${esc(CURATOR)}</div><div class="meta">Curator of this thread</div></div></div>
+      <div class="tags">${rel ? `<span class="pill"><i style="background:${RELCOL[rel.family] || "#999"}"></i>${esc(rel.label || rel.family)}</span>` : ""}</div>`;
+  } else {
+    const n = byId[host.dataset.id || host.dataset.jump || host.dataset.tid], aid = n.author, a = D.authors[aid] || {};
+    const [, d] = lifeOf(aid), civ = [...nodeCivs[n.id]][0];
+    html = `<div class="mh">${speakerAv(n)}<div><div class="nm">${esc(speakerName(n))}</div><div class="meta">${n.speaker ? "in " + esc(a.name) : esc(edtf(a.life))}${d !== null && d < state.year && !COLLECTIVE.has(aid) ? " · †" : ""}</div></div></div>
+      <div class="tags">${civ ? `<span class="pill"><i style="background:${civColor(civ)}"></i>${esc(civName(civ))}</span>` : ""}${n.religion ? `<span class="pill"><i style="background:${RELCOL[n.religion] || "#999"}"></i>${esc(n.religion)}</span>` : ""}</div>`;
+  }
+  mini.innerHTML = html;
+  const r = e.target.closest(".av, .who").getBoundingClientRect();
+  mini.style.display = "block";
+  mini.style.left = Math.min(innerWidth - 270, r.right + 10) + "px";
+  mini.style.top = Math.max(8, Math.min(r.top - 6, innerHeight - mini.offsetHeight - 8)) + "px";
+});
+
+// ---------- channel menu: bibliography, stats, download ----------
+const chanMenu = $("chanMenu");
+$("chanMenuBtn").onclick = e => { e.stopPropagation(); chanMenu.hidden = !chanMenu.hidden; };
+addEventListener("click", e => { if (!chanMenu.contains(e.target) && e.target !== $("chanMenuBtn")) chanMenu.hidden = true; });
+chanMenu.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (!b) return; chanMenu.hidden = true;
+  ({ bib: showBibliography, stats: showStats, json: downloadChannel })[b.dataset.act](); });
+$("pageBack").onclick = () => $("chanPage").hidden = true;
+const channelNodes = () => D.nodes.filter(n => inChannel(n, chanById[state.channel]));
+function openPage(title, html) {
+  $("pageChan").textContent = chanById[state.channel].name; $("pageTitle").textContent = title;
+  $("pageBody").innerHTML = html; $("pageBody").scrollTop = 0; $("chanPage").hidden = false;
+}
+function showBibliography() {
+  const ns = channelNodes(), byAuthor = new Map();
+  for (const n of ns) { if (!byAuthor.has(n.author)) byAuthor.set(n.author, []); byAuthor.get(n.author).push(n); }
+  const authors = [...byAuthor.entries()].sort((a, b) => a[1][0].t - b[1][0].t);
+  const html = authors.map(([aid, list]) => {
+    const a = D.authors[aid] || {}, works = new Map();
+    for (const n of list) { if (!works.has(n.work)) works.set(n.work, []); works.get(n.work).push(n); }
+    return `<div class="bib-author">${esc(a.name || aid)}<span class="meta">${esc(edtf(a.life))}</span></div>` +
+      [...works.entries()].map(([w, us]) => { const f = us[0];
+        const refs = us.map(u => u.ref).filter(Boolean), trans = [...new Set(us.map(u => u.transBy).filter(Boolean))];
+        const urls = [...new Map(us.filter(u => u.url).map(u => [u.url, u])).values()];
+        return `<div class="bib-work"><i>${esc(w)}</i>. ${esc(edtf(f.date))}${f.placeName ? ", " + esc(f.placeName) : ""}.
+          ${trans.length ? ` Trans. ${esc(trans.join(", "))}.` : ""}${f.sourceLabel ? ` ${esc(f.sourceLabel)}.` : ""}
+          ${urls.map(u => `<a href="${esc(u.url)}" target="_blank" rel="noopener">source ↗</a>`).join(" ")}
+          ${refs.length ? `<div class="refs">Cited: ${esc(refs.join("; "))} · ${us.length} utterance${us.length === 1 ? "" : "s"}</div>` : ""}</div>`; }).join("");
+  }).join("");
+  openPage("Bibliography", `<div class="note">Every source quoted in #${esc(chanById[state.channel].name)}, by speaker in order of first appearance. ${ns.length} utterances from ${authors.length} speakers.</div>` + (html || "<p>No sources yet.</p>"));
+}
+function showStats() {
+  const ch = chanById[state.channel], all = channelNodes(), now = all.filter(n => n.t <= state.year), y = state.year;
+  const ids = new Set(all.map(n => n.id)), works = new Set(all.map(n => n.workId).filter(Boolean));
+  const replies = D.edges.filter(e => works.has(e.from) || works.has(e.to));
+  const ments = MENTIONS.filter(m => ids.has(m.from) || ids.has(m.to));
+  const cur = Object.entries(CUR).filter(([id]) => ids.has(id)), curNow = cur.filter(([id]) => curT(id) <= y);
+  const speakers = new Set(all.map(n => n.author)), langs = {};
+  for (const n of all) if (n.lang) langs[n.lang] = (langs[n.lang] || 0) + 1;
+  const tile = (v, l) => `<div class="tile"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+  const ts = all.map(n => n.t), t0 = Math.min(...ts), t1 = Math.max(...ts);
+  // utterances per century (single series, one hue; paler bars are later than the current date)
+  const c0 = Math.floor(t0 / 100), c1 = Math.floor(t1 / 100), bins = [];
+  for (let c = c0; c <= c1; c++) bins.push({ c, n: all.filter(n => Math.floor(n.t / 100) === c).length });
+  const mx = Math.max(1, ...bins.map(b => b.n)), curC = Math.floor(y / 100);
+  const cLabel = c => c < 0 ? `${ordinal(-c)} c. BC` : `${ordinal(c + 1)} c. AD`;
+  const bars = `<div class="bars" role="img" aria-label="Utterances per century">${bins.map(b => `<div class="b${b.c > curC ? " later" : ""}" style="height:${b.n / mx * 100}%" data-tip="${cLabel(b.c)}: ${b.n}"></div>`).join("")}</div>
+    <div class="baraxis"><span>${cLabel(c0)}</span><span>${cLabel(c1)}</span></div><div class="note">Paler bars are later than the current date (${esc(clockText())}).</div>`;
+  const rank = (obj, label, max = 12) => { const rows = Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, max), m = rows[0]?.[1] || 1;
+    return `<table class="rank" aria-label="${esc(label)}">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="bar"><span style="width:${v / m * 100}%"></span></td><td class="n">${v}</td></tr>`).join("")}</table>`; };
+  const bySpeaker = {}, byRel = {}, byCiv = {};
+  for (const n of all) { bySpeaker[n.authorName] = (bySpeaker[n.authorName] || 0) + 1; byRel[n.religion || "Unknown"] = (byRel[n.religion || "Unknown"] || 0) + 1;
+    const cs = [...nodeCivs[n.id]]; const k = cs.length ? civName(cs[0]) : "Outside the mapped civilizations"; byCiv[k] = (byCiv[k] || 0) + 1; }
+  const LANGS = { grc: "Ancient Greek", ang: "Old English", la: "Latin", sa: "Sanskrit", he: "Hebrew", ar: "Arabic", fa: "Persian", enm: "Middle English", fro: "Old French" };
+  const langName = l => LANGS[l] || (() => { try { const n = new Intl.DisplayNames(["en"], { type: "language" }).of(l); return n && n !== l ? n : l; } catch { return l; } })();
+  const byLang = Object.fromEntries(Object.entries(langs).map(([k, v]) => [langName(k), v]));
+  openPage("Channel stats", `
+    <div class="tiles">
+      ${tile(`${now.length}<span style="font-size:16px;color:var(--ink-2)"> / ${all.length}</span>`, "utterances so far / in all")}
+      ${tile(speakers.size, "speakers")}
+      ${tile(Object.keys(langs).length, "languages")}
+      ${tile(`${fmtYear(t0)}`, `first utterance · last ${fmtYear(t1)}`)}
+      ${tile(replies.length, "replies between works")}
+      ${tile(ments.length, "@ callbacks")}
+      ${tile(`${curNow.length}<span style="font-size:16px;color:var(--ink-2)"> / ${cur.length}</span>`, `${esc(CURATOR)}'s replies written / in all`)}
+      ${tile(all.filter(n => !n.orig).length, "with no direct quote")}
+    </div>
+    <h3>Utterances per century</h3>${bars}
+    <div class="cols">
+      <div><h3>Most utterances</h3>${rank(bySpeaker, "Most utterances")}</div>
+      <div><h3>Languages</h3>${rank(byLang, "Languages")}</div>
+      ${ch.kind !== "rel" ? `<div><h3>Religion of the speaker</h3>${rank(byRel, "Religion of the speaker")}</div>` : ""}
+      ${ch.kind !== "civ" ? `<div><h3>Civilization where spoken</h3>${rank(byCiv, "Civilization where spoken")}</div>` : ""}
+    </div>`);
+}
+function downloadChannel() {
+  const ch = chanById[state.channel], ns = channelNodes(), ids = new Set(ns.map(n => n.id)), works = new Set(ns.map(n => n.workId).filter(Boolean));
+  const authors = [...new Set(ns.map(n => n.author))];
+  const data = {
+    server: "The Great Conversation",
+    channel: { id: ch.id, name: ch.name, label: ch.label, topic: ch.topic, filter: ch.kind === "all" ? "everything" : ch.kind === "civ" ? `inside civilization '${ch.key}' at the time spoken` : `speaker's religion was '${ch.key}' when spoken` },
+    exported: new Date().toISOString(),
+    counts: { utterances: ns.length, speakers: authors.length },
+    utterances: ns.map(n => ({ ...(D.entries?.[n.id] || {}), ...(CTX_EDITS[n.id] !== undefined ? { context: CTX_EDITS[n.id], context_edited: true } : {}), display_time: n.t, civilizations: [...nodeCivs[n.id]], religion_at_time: n.religion })),
+    speakers: Object.fromEntries(authors.map(a => [a, D.authors[a]])),
+    replies: D.edges.filter(e => works.has(e.from) || works.has(e.to)),
+    mentions: MENTIONS.filter(m => ids.has(m.from) || ids.has(m.to)),
+    curator: { name: CURATOR, profile: CUR_PROFILE, replies: Object.fromEntries(Object.entries(CUR).filter(([id]) => ids.has(id)).map(([id, c]) => [id, { ...c, text: curText(id), edited: CUR_EDITS[id] !== undefined }])) },
+  };
+  const blob = new Blob([JSON.stringify(data, null, 1)], { type: "application/json" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${ch.name}.json` });
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+
+
+// ---------- you: a small menu behind your avatar, and the settings dialog ----------
+const me = $("me"), meMenu = $("meMenu"), dlg = $("settingsDlg");
+me.onclick = e => { e.stopPropagation(); meMenu.hidden = !meMenu.hidden; me.setAttribute("aria-expanded", String(!meMenu.hidden)); };
+addEventListener("click", e => { if (!meMenu.contains(e.target) && !me.contains(e.target)) { meMenu.hidden = true; me.setAttribute("aria-expanded", "false"); } });
+$("openSettings").onclick = () => { meMenu.hidden = true; openSettings(); };
+// STUB: "Be Curator" is a local switch standing in for real sign-in. The guest state is untouched;
+// switching back returns to it. Only Curator sees the edit controls on Curator's replies and on context.
+// Sign-in is Cloudflare Access (email one-time PIN); the server decides who may edit.
+$("signIn").onclick = () => account.signIn();
+$("signOut").onclick = () => account.signOut();
+$("setName").onclick = async () => {
+  meMenu.hidden = true;
+  const name = prompt("Your display name (2–40 characters, unique):", account.me?.displayName || "");
+  if (name !== null && name.trim()) await account.setDisplayName(name);
+};
+account.onChange(() => {
+  curatorMode = !!account.me?.curator;
+  syncCuratorUI(); renderThread(); refreshSlots(); keys.prof = null; updateProfile();
+});
+$("openWelcome").onclick = () => { meMenu.hidden = true; $("wskip").checked = !!load("gc.welcomed", false); $("welcome").hidden = false; };
+function openSettings(tab = "utt") { buildLangTable(); syncCuratorUI(); dlg.hidden = false; showTab(tab); dlg.querySelector(`[data-tab="${tab}"]`).focus(); }
+function closeSettings() { dlg.hidden = true; me.focus(); }
+$("setClose").onclick = closeSettings;
+dlg.addEventListener("click", e => { if (e.target === dlg) closeSettings(); });
+function showTab(tab) {
+  dlg.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+  dlg.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== tab);
+}
+dlg.querySelector(".dlg-tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
+// the languages actually spoken in the conversation (English needs no choice)
+const LANG_ROWS = (() => { const m = {};
+  for (const n of D.nodes) if (n.lang && n.orig) { const k = n.lang; (m[k] ||= { lang: k, n: 0, trans: 0, sample: null }); m[k].n++; if (n.trans) { m[k].trans++; m[k].sample ||= n.orig; } }
+  return Object.values(m).filter(r => r.trans).sort((a, b) => b.n - a.n); })();
+const segHTML = (key, cur, mixed) => `<span class="seg${mixed ? " mixed" : ""}" role="group" aria-label="Show as">${[["trans", "English"], ["orig", "Original"], ["both", "Both"]]
+  .map(([v, l]) => `<button data-lang="${esc(key)}" data-mode="${v}" aria-pressed="${!mixed && cur === v}">${l}</button>`).join("")}</span>`;
+function buildLangTable() {
+  const modes = LANG_ROWS.map(r => modeFor(r.lang)), same = modes.every(m => m === modes[0]);
+  $("langTable").innerHTML = `<tr class="all"><td>All languages</td><td class="n">${LANG_ROWS.reduce((s, r) => s + r.n, 0)}</td><td>${segHTML("*", modes[0], !same)}</td></tr>` +
+    LANG_ROWS.map(r => `<tr><td>${esc(langLabel(r.lang))}<span class="sample" lang="${esc(r.lang)}">${esc(r.sample)}</span></td><td class="n">${r.n}</td><td>${segHTML(r.lang, modeFor(r.lang), false)}</td></tr>`).join("");
+}
+$("langTable").addEventListener("click", e => {
+  const b = e.target.closest("[data-mode]"); if (!b) return;
+  if (b.dataset.lang === "*") langModes = { "*": b.dataset.mode }; else langModes[b.dataset.lang] = b.dataset.mode;
+  save("gc.langModes", langModes); buildLangTable(); applyLangModes();
+});
+function applyLangModes() {
+  feed.querySelectorAll(".msg[data-id]").forEach(m => { const b = m.querySelector(".body"); if (b) b.innerHTML = showQuote(byId[m.dataset.id]); });
+  refreshSlots(); renderThread(); keys.prof = null; render();
+}
+addEventListener("keydown", e => { if (e.key === "Escape" && !dlg.hidden) closeSettings(); });
+function syncCuratorUI() {
+  const me = account.me, who = me ? (me.displayName || me.email) : "Guest listener";
+  const nr = Object.keys(CUR_EDITS).length, nc = Object.keys(CTX_EDITS).length, n = nr + nc;
+  $("curStatus").textContent = curatorMode ? `Signed in as the curator (${me.email}): your edits are saved for everyone.`
+    : me ? `Signed in as ${me.email}. Only the curator can edit.` : "Sign in from your avatar menu (top right) as the curator to edit.";
+  $("curEditCount").textContent = n ? `Edited: ${nr} repl${nr === 1 ? "y" : "ies"}, ${nc} context${nc === 1 ? "" : "s"}.` : "No edits yet.";
+  $("curExport").disabled = !n;
+  document.querySelector("#me .mename").textContent = who;
+  document.querySelector(".mm-name").textContent = who;
+  $("mmSub").textContent = me ? (curatorMode ? `Curator · ${me.email}` : me.email) : "Not signed in";
+  const initial = me ? (curatorMode ? CURATOR[0] : who[0].toUpperCase()) : "You";
+  document.querySelector(".mm-head .meav").textContent = initial;
+  document.querySelector("#me .meav").textContent = initial;
+  $("signIn").hidden = !!me; $("signOut").hidden = $("setName").hidden = !me;
+  // The avatar is where you sign in: say so, and say who you are once you have.
+  const tip = me ? `Signed in as ${who}${curatorMode ? " · Curator" : ""} — settings, sign out` : "Sign in or settings";
+  $("me").title = tip; $("me").setAttribute("aria-label", tip);
+}
+$("curExport").onclick = () => {
+  const out = { kind: "curator-edits", curator: CURATOR, exported: new Date().toISOString(),
+    edits: [...Object.entries(CUR_EDITS).map(([id, text]) => ({ entry: id.replace(/^entry:/, ""), field: "interpretation", value: text, was: byId[id]?.interp ?? null })),
+            ...Object.entries(CTX_EDITS).map(([id, text]) => ({ entry: id.replace(/^entry:/, ""), field: "context", value: text, was: byId[id]?.context ?? null }))] };
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" })), download: "curator-edits.json" });
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+syncCuratorUI();
+function buildMaskList(id, keyList, set, color, label) {
+  const box = $(id);
+  box.innerHTML = keyList.map(k => `<label class="row" data-k="${esc(k)}"><input type="checkbox" value="${esc(k)}" ${set.has(k) ? "checked" : ""}><span class="sw" style="background:${color(k)}"></span>${esc(label(k))}</label>`).join("");
+  box.addEventListener("change", e => { e.target.checked ? set.add(e.target.value) : set.delete(e.target.value); render(); });
+}
+buildMaskList("civList", civKeys, state.civOn, civColor, civName);
+buildMaskList("relList", relKeys, state.relOn, k => RELCOL[k] || "#999", k => k);
+document.querySelectorAll("[data-all],[data-none]").forEach(b => b.onclick = () => {
+  const which = b.dataset.all || b.dataset.none, set = which === "civ" ? state.civOn : state.relOn;
+  set.clear(); if (b.dataset.all) (which === "civ" ? civKeys : relKeys).forEach(k => set.add(k));
+  document.querySelectorAll(`#${which}List input`).forEach(i => i.checked = set.has(i.value));
+  render();
+});
+$("civClip").checked = state.civClip;
+$("civClip").onchange = e => { state.civClip = e.target.checked; render(); };
+$("windowSel").value = String(state.window);
+$("windowSel").onchange = e => { state.window = +e.target.value; render(); };
+$("resetView").onclick = () => { try { ["gc.state.v3", "gc.layout.v2", "gc.welcomed", "gc.closedCats", "gc.collapsed", "gc.langModes", "quoteMode"].forEach(k => localStorage.removeItem(k)); } catch {} location.reload(); };
+
+let saveTimer;
+function saveSoon() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => save("gc.state.v3", { year: state.year, pov: globe.pointOfView(), channel: state.channel,
+    civOn: [...state.civOn], relOn: [...state.relOn], civClip: state.civClip, window: state.window }), 400);
+}
+
+// ---------- the clock: 7-segment ----------
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+function clockText() { return fmtWhen(state.year); }
+// The conversation's date as a moment: the fraction of the year becomes month, day and time of day.
+function momentOf(y) {
+  const yr = Math.floor(y), frac = y - yr;
+  const leap = (yr % 4 === 0 && yr % 100 !== 0) || yr % 400 === 0, days = leap ? 366 : 365;
+  let mins = Math.min(days * 1440 - 1, Math.floor(frac * days * 1440));
+  const doy = Math.floor(mins / 1440); mins -= doy * 1440;
+  const mdays = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  let m = 0, d = doy; while (d >= mdays[m]) d -= mdays[m++];
+  return { yr, mo: m + 1, day: d + 1, hh: Math.floor(mins / 60), mm: mins % 60 };
+}
+const p2 = n => String(n).padStart(2, "0");
+function setClock(y) {
+  if (y >= T1 - 1e-6) { const d = new Date(); y = d.getFullYear() + 0; var live = { yr: d.getFullYear(), mo: d.getMonth() + 1, day: d.getDate(), hh: d.getHours(), mm: d.getMinutes() }; }
+  const t = live || momentOf(y), disp = t.yr < 1 ? 1 - t.yr : t.yr;   // astronomical year 0 = 1 BC
+  $("ckH").textContent = p2(t.hh); $("ckM").textContent = p2(t.mm);
+  $("ckDate").textContent = `${String(disp).padStart(4, "0")}!${p2(t.mo)}!${p2(t.day)}`;
+  $("ckEra").textContent = t.yr < 1 ? "BC" : "AD";
+  $("clock").title = `${p2(t.hh)}:${p2(t.mm)} ${String(disp).padStart(4, "0")}/${p2(t.mo)}/${p2(t.day)} ${t.yr < 1 ? "BC" : "AD"} in the conversation`;
+}
+
+setInterval(() => { if (isPresent()) setClock(state.year); }, 1000);
+
+// ---------- render ----------
+function render() {
+  saveSoon();
+  const y = state.year, w = state.window, ch = chanById[state.channel];
+  const civSet = ch.kind === "civ" ? new Set([ch.key]) : state.civOn;
+  const relSet = ch.kind === "rel" ? new Set([ch.key]) : state.relOn;
+  const mk = [...civSet].sort().join() + "|" + [...relSet].sort().join() + "|" + state.civClip + "|" + state.channel;
+  const visible = n => n.t <= y && (!w || y - (n.t1 ?? n.t) <= w);
+  const activeCivs = D.civs.filter(c => c.t0 <= y && y <= c.t1);
+  const shadedCivs = activeCivs.filter(c => civSet.has(c.civ));
+  let nodes = D.nodes.filter(n => visible(n) && inChannel(n, ch));
+  if (state.civClip && ch.kind !== "civ") nodes = nodes.filter(n => shadedCivs.some(c => inPoly(n, c.core) || (c.halo && inPoly(n, c.halo))));
+
+  const sysNow = SYS.filter(e => e.t <= y && (!w || y - e.t <= w) && sysInChannel(e, ch));
+  const feedItems = [...nodes, ...sysNow].sort((a, b) => a.t - b.t);
+  globe.setTime(y, w);
+  const nodeKey = mk + "|" + feedItems.map(n => n.id).join();
+  if (nodeKey !== keys.nodes) { keys.nodes = nodeKey; renderFeed(feedItems); mineKey = null; }
+  // latest speaker: the last thing said in this channel (an utterance, or Curator's reply to it)
+  const last = nodes[nodes.length - 1];
+  const lastWho = last ? last.author : null;   // the curator is never the profile subject
+  if (lastWho !== latestSpeaker) { latestSpeaker = lastWho; keys.members = null; }
+
+  // replies & mentions (time-dependent): refresh when anything new could have appeared
+  const curVisible = nodes.filter(n => n.interp && CUR[n.id] && curT(n.id) <= y).length;
+  const tickKey = nodes.length + "|" + curVisible + "|" + D.edges.filter(e => e.t <= y).length + "|" + state.channel;
+  if (tickKey !== keys.tick) { keys.tick = tickKey; refreshSlots(); renderThread(); }
+
+  // Threads and @mentions are drawn and timed on the GPU.
+
+  const civKey = mk + activeCivs.map(c => c.name + c.t0).join();
+  if (civKey !== keys.civ) {
+    keys.civ = civKey;
+    globe.civMask(civSet);
+    globe.religionMask(relSet);
+    document.querySelectorAll("#civList label").forEach(l => l.classList.toggle("inactive", !activeCivs.some(c => c.civ === l.dataset.k)));
+  }
+
+  const ymon = Math.floor(y * 12);
+  const memKey = ymon + "|" + state.channel + "|" + w + "|" + tickKey + "|" + typingWho + "|" + profTarget() + "|" + latestSpeaker;
+  if (memKey !== keys.members) {
+    keys.members = memKey;
+    renderMembers(y); requestAnimationFrame(placeProfile);
+    updateUnread();
+    $("count").textContent = `${nodes.length} utterances`;
+  }
+  updateProfile();
+
+  renderMine(); renderComposers();
+  const pk = isPresent(); if (pk !== keys.present) { keys.present = pk; refreshSlots(); renderThread(); keys.members = null; }
+  setClock(y);
+  if (Math.abs(+$("slider").value - y) > 1e-3) $("slider").value = y;
+}
+
+// ---------- playback: one message at a time, ~10-15 s each, with "is typing" ----------
+let EVENTS = [];
+function buildEvents() {
+  const ch = chanById[state.channel];
+  EVENTS = [];
+  for (const n of D.nodes) if (inChannel(n, ch)) {
+    EVENTS.push({ t: n.t, kind: "msg", n, who: n.author });
+    if (n.interp && CUR[n.id]) EVENTS.push({ t: curT(n.id), kind: "cur", n, who: "@curator" });
+  }
+  EVENTS.sort((a, b) => a.t - b.t);
+}
+const play = { seg: null };
+const msgDuration = ev => ev.kind === "cur" ? 8000 : 10000 + Math.min(5000, (ev.n.trans || ev.n.orig || ev.n.context || "").length * 20);
+function typingName(who) { return who === "@curator" ? CURATOR : who ? (D.authors[who]?.name || who) : ""; }
+function setTyping(who, ev) {
+  if (typingWho === who) return;
+  typingWho = who;
+  $("typing").innerHTML = who ? `<span class="dots"><i></i><i></i><i></i></span><span><b>${esc(ev?.n?.speaker && who !== "@curator" ? speakerName(ev.n) : typingName(who))}</b> is typing…</span>` : "";
+  keys.members = null;
+}
+let liveTypingTimer = 0;
+account.onTyping(m => {
+  if (!isPresent() || state.playing || m.channel !== state.channel) return;
+  const where = m.thread ? " in a thread" : "";
+  $("typing").innerHTML = `<span class="dots"><i></i><i></i><i></i></span><span><b>${esc(m.name)}</b> is typing${where}…</span>`;
+  clearTimeout(liveTypingTimer);
+  liveTypingTimer = setTimeout(() => { if (!state.playing) $("typing").innerHTML = ""; }, 6000);
+});
+document.addEventListener("input", e => {
+  const f = e.target.closest?.(".compose[data-where]"); if (!f || !e.target.value.trim()) return;
+  account.typing(state.channel, f.dataset.where === "thread" ? openThreadId : null);
+});
+function startSegment() {
+  const ev = EVENTS.find(e => e.t > state.year + 1e-9);
+  if (!ev) { // nothing left: drift to the present, then stop
+    play.seg = { ev: null, from: state.year, to: T1, start: performance.now(), dur: Math.max(1500, Math.min(6000, (T1 - state.year) * 40)), typing: 0 };
+    return;
+  }
+  const dur = msgDuration(ev), typing = ev.kind === "cur" ? 4000 : 4500;
+  play.seg = { ev, from: state.year, to: ev.t, start: performance.now(), dur, typing };
+}
+function tick(now) {
+  if (!state.playing) return;
+  if (!play.seg) startSegment();
+  const s = play.seg, el = now - s.start, travel = s.dur - s.typing;
+  if (el < travel) {           // the scrubber moves toward the next message (fast across quiet eras)
+    const p = el / travel, ease = p < .5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
+    state.year = Math.max(s.from, s.ev ? Math.min(s.to - 1e-7, s.from + (s.to - s.from) * ease) : s.from + (s.to - s.from) * ease);
+    setTyping(null);
+  } else if (s.ev && el < s.dur) {   // arrived: someone is typing
+    state.year = Math.max(s.from, s.to - 1e-7); setTyping(s.ev.who, s.ev);
+  } else {                     // deliver
+    state.year = s.to; setTyping(null); play.seg = null;
+    if (!s.ev) { render(); setPlaying(false); return; }
+  }
+  render();
+  requestAnimationFrame(tick);
+}
+const PLAY_SVG = '<path d="M4 2v12l10-6z"/>', PAUSE_SVG = '<path d="M3 2h4v12H3zM9 2h4v12H9z"/>';
+function setPlaying(on) {
+  state.playing = on; $("playIcon").innerHTML = on ? PAUSE_SVG : PLAY_SVG;
+  play.seg = null; if (!on) { setTyping(null); render(); } else requestAnimationFrame(tick);
+}
+const slider = $("slider");
+Object.assign(slider, { min: T0, max: T1, step: "any", value: state.year });
+slider.oninput = () => { state.year = +slider.value; play.seg = null; setTyping(null); render(); };
+for (let y = -1000; y <= 2000; y += 250) $("ticks").insertAdjacentHTML("beforeend", `<span style="left:${(y - T0) / (T1 - T0) * 100}%">${y < 0 ? -y + " BC" : y === 0 ? "AD 1" : y}</span>`);
+const jump = y => { state.year = Math.max(T0, Math.min(T1, y)); play.seg = null; setTyping(null); render(); };
+$("play").onclick = () => { if (!state.playing && state.year >= T1 - 1e-6) jump(T0); setPlaying(!state.playing); };
+$("stop").onclick = () => { setPlaying(false); jump(T0); };
+$("toStart").onclick = () => jump(T0);
+$("toEnd").onclick = () => { setPlaying(false); jump(T1); };
+$("next").onclick = () => { const ev = EVENTS.find(e => e.t > state.year + 1e-9); if (ev) jump(ev.t); };
+$("prev").onclick = () => { const ev = [...EVENTS].reverse().find(e => e.t < state.year - 1e-9); jump(ev ? ev.t : T0); };
+addEventListener("keydown", e => {
+  if (["SELECT", "INPUT", "TEXTAREA"].includes(e.target.tagName) || !$("welcome").hidden) return;
+  if (e.code === "Space") { e.preventDefault(); $("play").click(); }
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+
+// ---------- resizable panes + pop-out globe ----------
+function dragger(handle, onMove) {
+  handle.addEventListener("pointerdown", e => {
+    e.preventDefault(); handle.setPointerCapture(e.pointerId); handle.classList.add("drag");
+    const move = ev => onMove(ev), up = () => { handle.classList.remove("drag"); handle.removeEventListener("pointermove", move); handle.removeEventListener("pointerup", up); save("gc.layout.v2", layout); };
+    handle.addEventListener("pointermove", move); handle.addEventListener("pointerup", up);
+  });
+}
+dragger($("vsplitL"), e => { layout.leftW = Math.max(200, Math.min(innerWidth * .45, e.clientX)); setVar("--left-w", layout.leftW); });
+dragger($("vsplitR"), e => { layout.sideW = Math.max(220, Math.min(innerWidth * .5, innerWidth - e.clientX)); setVar("--side-w", layout.sideW); });
+dragger($("hsplitL"), e => { const b = $("left").getBoundingClientRect().bottom; layout.globeH = Math.max(120, Math.min(b - 160, b - e.clientY)); setVar("--globe-h", layout.globeH); });
+// Pop-out: a real browser window running the same globe (globe.js mirrors every command to it
+// and passes its clicks back), so everything behaves as when docked.
+function popOut(on) {
+  if (on && !globe.popOut()) return;   // the browser blocked the window
+  if (!on && globe.popped) globe.dock();
+  $("globePane").classList.toggle("popped", on); $("poppedNote").style.display = on ? "block" : "none"; $("hsplitL").style.display = on ? "none" : "";
+}
+$("popBtn").onclick = () => popOut(true);
+$("dockBtn2").onclick = () => popOut(false);
+globe.on("docked", () => popOut(false));
+// Phones: the globe is a full-screen view behind the World button.
+const setWorld = on => document.body.classList.toggle("world", on);
+$("worldBtn").onclick = () => setWorld(!document.body.classList.contains("world"));
+$("worldClose").onclick = () => setWorld(false);
+
+// ---------- welcome ----------
+const welcome = $("welcome");
+let autoplayed = false;
+const autoplay = () => { if (autoplayed) return; autoplayed = true; if (!state.playing) setTimeout(() => $("play").click(), 0); };
+if (!load("gc.welcomed", false)) welcome.hidden = false; else autoplay();
+// Shown on every visit until "Don't show this message again" is ticked.
+$("wskip").checked = !!load("gc.welcomed", false);
+const closeWelcome = () => { welcome.hidden = true; save("gc.welcomed", $("wskip").checked); autoplay(); };
+$("wgo").onclick = closeWelcome;
+welcome.addEventListener("click", e => { if (e.target === welcome) closeWelcome(); });
+addEventListener("keydown", e => { if (e.key === "Escape") { if (!welcome.hidden) closeWelcome(); meMenu.hidden = true; chanMenu.hidden = true; mini.style.display = "none"; } });
+
+joinChannel(state.channel);
+</script>
+</body>
+</html>

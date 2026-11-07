@@ -1,0 +1,16 @@
+# The live room (WebSocket fan-out) for the Great Conversation. Deployed by tools/deploy.sh:
+#   npx wrangler deploy -c live/wrangler.toml
+name = "great-conversation-live"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+# No public address: only the Pages site reaches the room (through its Durable Object binding).
+workers_dev = false
+preview_urls = false
+
+[[durable_objects.bindings]]
+name = "LIVE"
+class_name = "Live"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Live"]
