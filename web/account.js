@@ -43,7 +43,7 @@ async function write(method, body) {
   const r = await json("/auth/api/posts", { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
     .catch(e => ({ error: e.message }));
   if (r.signedOut) { notice("Please sign in again."); return false; }
-  if (r.error) { notice(r.error.includes("429") ? "Slow down a little." : "Couldn't save your message."); return false; }
+  if (r.error) { notice(r.error.includes("429") ? "Slow down a little." : r.error.includes("display name") ? "Choose a display name first (your avatar menu)." : "Couldn't save your message."); return false; }
   await account.loadPosts();
   return true;
 }
@@ -159,6 +159,11 @@ export const account = {
 
   async post(channel, thread, text) {
     if (!account.me) { notice("Sign in (your avatar, top right) to join the conversation."); return false; }
+    // Everyone who speaks has a name: readers choose one before their first message.
+    if (!account.me.curator && !account.me.displayName) {
+      const name = prompt("Choose a display name before you post (2–40 characters, unique):", "");
+      if (name === null || !name.trim() || !(await account.setDisplayName(name))) return false;
+    }
     return write("POST", { channel, thread, text });
   },
   editPost(id, text) { return write("PUT", { id, text }); },

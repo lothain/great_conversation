@@ -12,7 +12,7 @@ sub1(qr{const savePosts = \(\) => save\(POSTS_KEY, POSTS\);\n}, "", "no local po
 
 # Each message shows its author; only your own can be edited or deleted.
 sub1(qr{function myPostHTML\(p\) \{\n.*?\n\}\n}s, sub { q{function myPostHTML(p) {
-  const who = p.mine ? "You" : p.authorName || "A listener";
+  const who = p.mine ? "You" : p.authorName || "Unnamed";
   const initials = p.mine ? "You" : who.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return `<div class="msg mine${p.mine ? "" : " other"}" data-post="${esc(p.id)}"><div class="av">${esc(initials)}</div><div><div class="who">${esc(who)}<span class="when">${esc(fmtNow(p.at))}${p.edited ? " · edited" : ""}</span></div>
     <div class="body plain-text">${esc(p.text)}</div></div>
@@ -53,7 +53,7 @@ sub1(qr{(  \.msg\.cont \{ padding-top: 1px; \}\n)}, sub { $1 . q{  .msg .from { 
 } }, "from source css");
 # In thread previews a reader's reply shows its author ("You" only for your own).
 sub1(qr{const miniAv = r => r\.mine \? `<span class="mini" style="background:#6b5a44">Y</span>`}, sub { q{const miniAv = r => r.mine ? `<span class="mini" style="background:${r.post.mine ? "#6b5a44" : "#8a6f4e"}">${esc((r.post.mine ? "You" : r.post.authorName || "?")[0].toUpperCase())}</span>`} }, "reply avatar");
-sub1(qr{  const name = r\.mine \? "You" :}, sub { q{  const name = r.mine ? (r.post.mine ? "You" : r.post.authorName || "A listener") :} }, "reply author");
+sub1(qr{  const name = r\.mine \? "You" :}, sub { q{  const name = r.mine ? (r.post.mine ? "You" : r.post.authorName || "Unnamed") :} }, "reply author");
 # Position: save it when the page is hidden or closed too (phones often never fire the timer),
 # and autoplay only resumes a replay; it never restarts one that already reached the present.
 sub1(qr{(function saveSoon\(\) \{\n  clearTimeout\(saveTimer\);\n  saveTimer = setTimeout\(\(\) => )(save\("gc\.state\.v3", \{ year: state\.year, pov: globe\.pointOfView\(\), channel: state\.channel,\n    civOn: \[\.\.\.state\.civOn\], relOn: \[\.\.\.state\.relOn\], civClip: state\.civClip, window: state\.window \}\)), 400\);\n\}\n},

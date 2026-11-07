@@ -939,7 +939,7 @@ const collapsed = new Set(load("gc.collapsed", []));
 const setCollapsed = (id, on) => { on ? collapsed.add(id) : collapsed.delete(id); save("gc.collapsed", [...collapsed]); };
 const PREVIEW_MAX = 3;
 function replyRow(n, r) {
-  const name = r.mine ? (r.post.mine ? "You" : r.post.authorName || "A listener") : r.curator ? CURATOR : r.who ? speakerName(r.who) : r.e.fromLabel;
+  const name = r.mine ? (r.post.mine ? "You" : r.post.authorName || "Unnamed") : r.curator ? CURATOR : r.who ? speakerName(r.who) : r.e.fromLabel;
   const text = r.mine ? r.post.text : r.curator ? plain(curText(n.id)) : r.who ? snippet(r.who, 240) : r.e.aspect;
   const note = r.mine ? (r.post.edited ? "edited" : "") : r.curator ? (CUR_EDITS[n.id] !== undefined ? "edited" : "") : `${r.e.kind} · ${r.e.valence > 0 ? "adopts" : r.e.valence < 0 ? "rejects" : "mixed"}`;
   return `<div class="tp-row">${miniAv(r)}<div><div class="nm">${esc(name)}${note ? `<small>${esc(note)}</small>` : ""}${r.curator && curatorMode ? `<button class="tp-edit" data-curopen="${esc(n.id)}" title="Edit your reply">✎ Edit</button>` : ""}</div><div class="tx">${esc(text)}</div></div></div>`;
@@ -1068,7 +1068,7 @@ feed.addEventListener("mouseleave", () => globe.highlight(null));
 
 const fmtNow = iso => new Date(iso).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 function myPostHTML(p) {
-  const who = p.mine ? "You" : p.authorName || "A listener";
+  const who = p.mine ? "You" : p.authorName || "Unnamed";
   const initials = p.mine ? "You" : who.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return `<div class="msg mine${p.mine ? "" : " other"}" data-post="${esc(p.id)}"><div class="av">${esc(initials)}</div><div><div class="who">${esc(who)}<span class="when">${esc(fmtNow(p.at))}${p.edited ? " · edited" : ""}</span></div>
     <div class="body plain-text">${esc(p.text)}</div></div>

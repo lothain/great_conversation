@@ -9,7 +9,8 @@ export async function onRequestPost({ request, env }) {
   let b; try { b = await request.json(); } catch { return json({ error: "expected JSON" }, 400); }
   if (typeof b?.channel !== "string" || b.channel.length > 120) return json({ error: "bad request" }, 400);
   const row = await env.DB.prepare("SELECT display_name FROM users WHERE email = ?").bind(email).first();
-  const name = isCurator(email, env) ? "Tristan" : row?.display_name || "A listener";
+  const name = isCurator(email, env) ? "Tristan" : row?.display_name;
+  if (!name) return json({ ok: true });   // no display name yet: nothing to show others
   await announce(env, { type: "typing", channel: b.channel, thread: typeof b.thread === "string" ? b.thread : null, author: await readerId(email), name });
   return json({ ok: true });
 }
