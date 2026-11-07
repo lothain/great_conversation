@@ -928,7 +928,7 @@ function mentionedHTML(n) {
   const ms = (MENTIONS_TO[n.id] || []).filter(m => m.t <= state.year); if (!ms.length) return "";
   return `<div class="mentioned">↩ echoed by ${ms.map(m => `<span class="at" data-jump="${esc(m.from)}" title="${esc(m.note || "")}">@${esc(speakerName(byId[m.from]))}</span>`).join(" ")}</div>`;
 }
-const miniAv = r => r.mine ? `<span class="mini" style="background:#6b5a44">Y</span>` : r.curator ? `<span class="mini" style="background:var(--accent)">${esc(CURATOR[0])}</span>`
+const miniAv = r => r.mine ? `<span class="mini" style="background:${r.post.mine ? "#6b5a44" : "#8a6f4e"}">${esc((r.post.mine ? "You" : r.post.authorName || "?")[0].toUpperCase())}</span>` : r.curator ? `<span class="mini" style="background:var(--accent)">${esc(CURATOR[0])}</span>`
   : `<span class="mini" style="${r.who ? avStyle(r.who.author, r.who.religion) : "background:#7a6a52"}">${r.who ? "" : "?"}</span>`;
 // Replies have two states: a preview under the message (default) and the open thread panel.
 // Inline thread state per message: "preview" (default) or "collapsed"; remembered in this browser.
@@ -936,7 +936,7 @@ const collapsed = new Set(load("gc.collapsed", []));
 const setCollapsed = (id, on) => { on ? collapsed.add(id) : collapsed.delete(id); save("gc.collapsed", [...collapsed]); };
 const PREVIEW_MAX = 3;
 function replyRow(n, r) {
-  const name = r.mine ? "You" : r.curator ? CURATOR : r.who ? speakerName(r.who) : r.e.fromLabel;
+  const name = r.mine ? (r.post.mine ? "You" : r.post.authorName || "A listener") : r.curator ? CURATOR : r.who ? speakerName(r.who) : r.e.fromLabel;
   const text = r.mine ? r.post.text : r.curator ? plain(curText(n.id)) : r.who ? snippet(r.who, 240) : r.e.aspect;
   const note = r.mine ? (r.post.edited ? "edited" : "") : r.curator ? (CUR_EDITS[n.id] !== undefined ? "edited" : "") : `${r.e.kind} · ${r.e.valence > 0 ? "adopts" : r.e.valence < 0 ? "rejects" : "mixed"}`;
   return `<div class="tp-row">${miniAv(r)}<div><div class="nm">${esc(name)}${note ? `<small>${esc(note)}</small>` : ""}${r.curator && curatorMode ? `<button class="tp-edit" data-curopen="${esc(n.id)}" title="Edit your reply">✎ Edit</button>` : ""}</div><div class="tx">${esc(text)}</div></div></div>`;

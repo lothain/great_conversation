@@ -51,3 +51,6 @@ sub1(qr{      <div class="body">\$\{showQuote\(n\)\}</div><div class="cslot">},
 sub1(qr{(  \.msg\.cont \{ padding-top: 1px; \}\n)}, sub { $1 . q{  .msg .from { font-size: 14px; color: var(--ink-2); margin: 1px 0 2px; }
   .msg blockquote.mq { margin: 0; padding: 1px 0 1px 12px; border-left: 3px solid var(--rule); }
 } }, "from source css");
+# In thread previews a reader's reply shows its author ("You" only for your own).
+sub1(qr{const miniAv = r => r\.mine \? `<span class="mini" style="background:#6b5a44">Y</span>`}, sub { q{const miniAv = r => r.mine ? `<span class="mini" style="background:${r.post.mine ? "#6b5a44" : "#8a6f4e"}">${esc((r.post.mine ? "You" : r.post.authorName || "?")[0].toUpperCase())}</span>`} }, "reply avatar");
+sub1(qr{  const name = r\.mine \? "You" :}, sub { q{  const name = r.mine ? (r.post.mine ? "You" : r.post.authorName || "A listener") :} }, "reply author");
