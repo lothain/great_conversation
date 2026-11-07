@@ -19,7 +19,7 @@ const COAST_SIZE: (u32, u32) = (2048, 1024);
 
 fn main() -> Result<()> {
     let mut args = std::env::args_os().skip(1).map(PathBuf::from);
-    let data = args.next().unwrap_or_else(|| PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../../data")));
+    let data = args.next().unwrap_or_else(|| crate_dir().join("../../data"));
     let out = args.next().unwrap_or_else(|| data.join("baked"));
     fs::create_dir_all(&out).with_context(|| format!("creating {}", out.display()))?;
 
@@ -45,4 +45,10 @@ fn main() -> Result<()> {
     }
     eprintln!("baked {} ({} KB page model) in {:?}", out.display(), page.len() / 1024, started.elapsed());
     Ok(())
+}
+
+/// This crate's folder: from Cargo when run through it (so a moved checkout keeps working
+/// without a rebuild), else where it was built.
+fn crate_dir() -> PathBuf {
+    std::env::var_os("CARGO_MANIFEST_DIR").map_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")), PathBuf::from)
 }

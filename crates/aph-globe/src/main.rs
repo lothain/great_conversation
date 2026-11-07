@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
 
     let dir = std::env::args_os()
         .nth(1)
-        .map_or_else(|| PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../../data")), PathBuf::from);
+        .map_or_else(|| crate_dir().join("../../data"), PathBuf::from);
     let atlas = Atlas::build(&Dataset::load(&dir)?);
     let baked_coasts = std::fs::read(dir.join("baked/coasts.png")).ok();
     for missing in &atlas.unplaced {
@@ -47,3 +47,10 @@ fn fixed_size() -> Option<bevy::window::WindowResolution> {
 /// On the web the page starts the globe by calling `web::start`.
 #[cfg(target_arch = "wasm32")]
 fn main() {}
+
+/// This crate's folder: from Cargo when run through it (so a moved checkout keeps working
+/// without a rebuild), else where it was built.
+#[cfg(not(target_arch = "wasm32"))]
+fn crate_dir() -> std::path::PathBuf {
+    std::env::var_os("CARGO_MANIFEST_DIR").map_or_else(|| std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")), std::path::PathBuf::from)
+}
